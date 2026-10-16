@@ -1,0 +1,3 @@
+Pillow>=10
+boto3
+pytest>=8
