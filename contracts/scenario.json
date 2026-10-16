@@ -1,0 +1,9 @@
+{
+  "_comment": "V fills package, launch_activity and real entry_steps from docs/APP_MAP.md. Keys starting with _ are ignored by the engine.",
+  "package": "UNCLEAR-V-fills-from-APP_MAP",
+  "launch_activity": "UNCLEAR-V-fills-from-APP_MAP",
+  "screens": [
+    {"screen": "home", "entry_steps": [], "exit_targets": ["home.drawer.1"], "max_probes": 80, "max_depth": 8},
+    {"screen": "details", "entry_steps": ["RIGHT", "CENTER"], "exit_targets": ["home.drawer.1"], "max_probes": 60, "max_depth": 8}
+  ]
+}

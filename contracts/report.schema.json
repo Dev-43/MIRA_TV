@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MIRA report.json v1 (C2)",
+  "type": "object",
+  "required": ["schema_version", "run_id", "mode", "app", "screens", "defects", "verify", "summary"],
+  "properties": {
+    "schema_version": {"const": "1"},
+    "run_id": {"type": "string"},
+    "mode": {"enum": ["live", "fixture"]},
+    "app": {"type": "object", "required": ["package", "git_commit"]},
+    "screens": {"type": "array"},
+    "defects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "screen", "element_id", "path", "evidence", "ai_explanation", "ai_source"],
+        "properties": {
+          "type": {"enum": ["UNREACHABLE", "TRAP", "NO_FOCUS_INDICATOR"]},
+          "ai_source": {"enum": ["bedrock", "cache", "stub", "none"]}
+        }
+      }
+    },
+    "verify": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["defect_id", "fix", "before", "after", "before_screenshot", "after_screenshot"],
+        "properties": {"before": {"const": "FAIL"}, "after": {"enum": ["PASS", "FAIL"]}}
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["defects_found", "fixed_verified", "ai_calls"]
+    }
+  }
+}

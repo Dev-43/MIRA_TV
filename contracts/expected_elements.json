@@ -1,0 +1,5 @@
+{
+  "_comment": "V lists every interactive element per screen from docs/APP_MAP.md. Keys starting with _ are ignored by the engine.",
+  "home": ["home.drawer.1"],
+  "details": ["details.btn.play"]
+}
