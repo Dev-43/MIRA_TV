@@ -25,10 +25,11 @@ D never needs the emulator: `FixtureDriver` replays recorded sessions. V never n
 - Branches: `main` (always green), `d/<topic>`, `v/<topic>`. Merge through pull requests. Each person merges their own branches after tests pass.
 - Contract changes (C1–C5, env vars, folder structure, key names, ID formats): commit message starts with `CONTRACT-CHANGE:`, and the change needs the other person's explicit "ok" in chat first. Update BUILD.md in the same PR.
 - Never force-push `main`. Never commit `.env`, keys, `artifacts/`, `node_modules/`.
-- Ownership: do not edit the other person's folders (see BUILD.md table). Ask them in chat.
+- Ownership: do not edit the other person's files (see `OWNERSHIP.md`). Run `python scripts/check_ownership.py --role D` (or `V`) before every push; it must print OK. Ask the owner in chat for changes.
+- Decision tracking: every architectural change or file addition must be documented in `DECISION.md` prior to checkpoint review.
 
 ## Daily Sync (10 minutes, same time each day, voice or chat)
-Each person posts: (1) done since yesterday, (2) blocked by, (3) next 24 hours. Anything blocked for more than 4 hours gets escalated in chat immediately and logged in `docs/FRICTION_LOG.md`.
+Each person posts: (1) done since yesterday, (2) blocked by, (3) next 24 hours, (4) new entries logged in `DECISION.md`. Anything blocked for more than 4 hours gets escalated in chat immediately and logged in `docs/FRICTION_LOG.md`.
 
 ## Timeline (IST) and Checkpoints
 | Date | D | V | Checkpoint |

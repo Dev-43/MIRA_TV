@@ -6,7 +6,7 @@
 You own the Python engine (`mira_tv/`), its tests, fixtures format, AI explanation layer, patch/verify logic, report builder, CI, and the written product feedback. You never need an emulator: you build and test against `FixtureDriver`. V records real fixtures on his laptop and runs live integration.
 
 ## Your Files
-`mira_tv/*`, `tests/*`, `fixtures/synthetic_*`, `ai_cache/*`, `report/build_report.py`, `contracts/focus_event.schema.json`, `contracts/report.schema.json`, `scripts/smoke.ps1`, `.github/workflows/test.yml`, `.env.example`, `.gitignore`, `requirements.txt`, `docs/FEEDBACK.md`, `docs/FRICTION_LOG.md`.
+`mira_tv/*`, `tests/*`, `fixtures/synthetic_*`, `ai_cache/*`, `report/build_report.py`, `contracts/focus_event.schema.json`, `contracts/report.schema.json`, `scripts/smoke.ps1`, `scripts/check_ownership.py`, `.github/workflows/test.yml`, `.env.example`, `.gitignore`, `requirements.txt`, `docs/FEEDBACK.md`, `docs/FRICTION_LOG.md`.
 You must NOT edit: `app/`, `bugs/`, `fixes/`, `contracts/scenario.json`, `contracts/expected_elements.json`, `contracts/bug_map.json`, `report/template.html`, `report/style.css`, `README.md`, `docs/APP_MAP.md`, `docs/DEMO_SCRIPT.md`.
 
 ## Setup (your laptop, low-spec OK)
