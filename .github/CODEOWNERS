@@ -1,0 +1,39 @@
+# Replace V_GITHUB_USERNAME with V's real GitHub username before pushing.
+/mira_tv/                      @Dev-43
+/tests/                        @Dev-43
+/fixtures/synthetic_clean/     @Dev-43
+/fixtures/synthetic_bugs/      @Dev-43
+/ai_cache/                     @Dev-43
+/report/build_report.py        @Dev-43
+/contracts/focus_event.schema.json @Dev-43
+/contracts/report.schema.json  @Dev-43
+/scripts/smoke.ps1             @Dev-43
+/scripts/check_ownership.py    @Dev-43
+/.github/workflows/            @Dev-43
+/docs/FEEDBACK.md              @Dev-43
+
+/app/                          @V_GITHUB_USERNAME
+/bugs/                         @V_GITHUB_USERNAME
+/fixes/                        @V_GITHUB_USERNAME
+/contracts/scenario.json       @V_GITHUB_USERNAME
+/contracts/expected_elements.json @V_GITHUB_USERNAME
+/contracts/bug_map.json        @V_GITHUB_USERNAME
+/report/template.html          @V_GITHUB_USERNAME
+/report/style.css              @V_GITHUB_USERNAME
+/scripts/check_hook.ps1        @V_GITHUB_USERNAME
+/scripts/check_patches.ps1     @V_GITHUB_USERNAME
+/fixtures/real_clean/          @V_GITHUB_USERNAME
+/fixtures/real_bugs/           @V_GITHUB_USERNAME
+/docs/APP_MAP.md               @V_GITHUB_USERNAME
+/docs/DEMO_SCRIPT.md           @V_GITHUB_USERNAME
+/README.md                     @V_GITHUB_USERNAME
+/LICENSE                       @V_GITHUB_USERNAME
+
+/BUILD.md                      @Dev-43 @V_GITHUB_USERNAME
+/BUILD_D.md                    @Dev-43 @V_GITHUB_USERNAME
+/BUILD_V.md                    @Dev-43 @V_GITHUB_USERNAME
+/INTEGRATION.md                @Dev-43 @V_GITHUB_USERNAME
+/SETUP.md                      @Dev-43 @V_GITHUB_USERNAME
+/OWNERSHIP.md                  @Dev-43 @V_GITHUB_USERNAME
+/DECISION.md                   @Dev-43 @V_GITHUB_USERNAME
+/.github/CODEOWNERS            @Dev-43 @V_GITHUB_USERNAME
