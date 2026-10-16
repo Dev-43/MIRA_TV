@@ -208,3 +208,20 @@ mira-tv/
   5. Established granular, structured commit history reflecting each subsystem rather than bulk commits.
 - **Files Modified / Added**: `.gitignore`, `BUILD.md`, `INTEGRATION.md`, `OWNERSHIP.md`, `scripts/check_ownership.py`, `.github/CODEOWNERS`, `tests/test_ownership.py`, `DECISION.md`.
 - **Integration Impact**: Both D and V now have clear guidelines and clean working trees for Task D2 and Task V0/V1 milestones.
+
+### [ADR-007] Drivers, Synthetic Fixtures, Exploration Graph & Session Recorder (CP0 Milestone)
+- **Date**: 2026-10-16
+- **Author**: D (Engine)
+- **Scope / Component**: `mira_tv/make_synthetic.py`, `mira_tv/fixture_driver.py`, `mira_tv/adb_driver.py`, `mira_tv/graph.py`, `mira_tv/explore.py`, `mira_tv/record.py`, `mira_tv/cli.py`, `tests/test_*`
+- **Context & Problem**: To achieve Checkpoint CP0 by Oct 16 evening, the engine must support offline fixture replay, live ADB driving with 20s timeouts, deterministic exploration graph mapping, and the `record` CLI tool so Teammate V can record real device fixtures on Oct 17.
+- **Decision Taken**:
+  1. Implemented `make_synthetic.py` with Pillow generating `synthetic_clean` and `synthetic_bugs` fixtures (~8 elements on `home`, ~4 on `details`, 1920x1080 screenshots with 6px focus borders, planted UNREACHABLE, TRAP, and missing focus indicator).
+  2. Unignored `fixtures/**/shots/` in `.gitignore` to guarantee offline test replayability in CI.
+  3. Implemented `FixtureDriver` replaying pre-recorded paths, screenshots, and sequence increments from `fixture.json`.
+  4. Implemented `AdbDriver` enforcing 20s timeouts on all subprocess calls, background raw logcat telemetry stream ingestion, and application relaunch sequence (`am force-stop` followed by `am start -n` and sequence counter reset).
+  5. Implemented `Graph` data structure supporting BFS shortest-path derivation, forward reachability, and reverse-reachability for exit target verification.
+  6. Implemented deterministic `explore_screen` following the exact BFS probe loop from `BUILD_D.md`, with automatic reset-and-replay recovery on focus loss.
+  7. Implemented `record_fixture` and wired `record` sub-command into `mira_tv/cli.py`, allowing V to capture live emulator sessions into standard fixture packages.
+- **Files Modified / Added**: `mira_tv/make_synthetic.py`, `fixtures/synthetic_clean/**`, `fixtures/synthetic_bugs/**`, `mira_tv/fixture_driver.py`, `mira_tv/adb_driver.py`, `mira_tv/graph.py`, `mira_tv/explore.py`, `mira_tv/record.py`, `mira_tv/cli.py`, `tests/test_fixture_driver.py`, `tests/test_adb_driver.py`, `tests/test_graph.py`, `tests/test_explore.py`, `tests/test_record.py`, `tests/test_cli.py`, `tests/test_telemetry.py`, `DECISION.md`.
+- **Integration Impact**: Milestone CP0 requirement ("record exists") is met. V can now execute `python -m mira_tv record --out fixtures/real_clean` on their laptop to capture real Android TV app fixtures.
+
