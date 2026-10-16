@@ -1,0 +1,14 @@
+:root { color-scheme: dark; }
+body { margin: 0; padding: 24px; background: #101418; color: #e8eaed; font: 18px/1.5 system-ui, Segoe UI, Arial, sans-serif; }
+header h1 { margin: 0 0 4px; }
+#meta, #summary { color: #9aa4ad; }
+.card { background: #181e24; border: 1px solid #2a323b; border-radius: 10px; padding: 16px; margin: 16px 0; }
+.card h2 { margin: 0 0 8px; font-size: 1.1em; }
+.path { font-family: Consolas, monospace; color: #c3cad1; }
+.split { display: flex; gap: 16px; flex-wrap: wrap; }
+.side { flex: 1 1 320px; border: 6px solid; border-radius: 8px; padding: 8px; }
+.side.fail { border-color: #e5484d; }
+.side.pass { border-color: #30a46c; }
+.side img { max-width: 100%; display: block; margin-top: 8px; }
+.badge { font-weight: 700; }
+footer { color: #9aa4ad; margin-top: 24px; font-size: 0.9em; }

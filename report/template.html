@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MIRA TV report</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><h1>MIRA TV</h1><p id="meta"></p></header>
+<section id="summary"></section>
+<main id="cards"></main>
+<footer>Pass/fail decided by deterministic tests; AI only explains.</footer>
+<script>
+window.MIRA_REPORT = /*__MIRA_REPORT_JSON__*/null;
+(function () {
+  var r = window.MIRA_REPORT;
+  var $ = function (id) { return document.getElementById(id); };
+  if (!r) { $('cards').textContent = 'No report data. Build this file with python -m mira_tv report.'; return; }
+  $('meta').textContent = 'Run ' + r.run_id + ' | mode: ' + r.mode + ' | app: ' + r.app.package;
+  var s = r.summary;
+  $('summary').textContent = 'Defects found: ' + s.defects_found + '   Fixes verified: ' + s.fixed_verified + '   AI calls: ' + s.ai_calls;
+  var byId = {};
+  (r.verify || []).forEach(function (v) { byId[v.defect_id] = v; });
+  (r.defects || []).forEach(function (d) {
+    var v = byId[d.id];
+    var card = document.createElement('article'); card.className = 'card';
+    var h = document.createElement('h2');
+    h.textContent = d.type + '  ' + d.element_id + '  (' + d.screen + ')';
+    card.appendChild(h);
+    var path = document.createElement('p'); path.className = 'path';
+    path.textContent = 'Path: ' + (d.path.length ? d.path.join(' > ') : '(none)');
+    card.appendChild(path);
+    var ex = document.createElement('p');
+    ex.textContent = (d.ai_explanation || d.evidence.detail) + '  [' + d.ai_source + ']';
+    card.appendChild(ex);
+    var split = document.createElement('div'); split.className = 'split';
+    function side(cls, label, img) {
+      var box = document.createElement('div'); box.className = 'side ' + cls;
+      var badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = label;
+      box.appendChild(badge);
+      if (img) { var im = document.createElement('img'); im.src = img; im.alt = label; box.appendChild(im); }
+      return box;
+    }
+    var after = v && v.after === 'PASS';
+    split.appendChild(side('fail', 'FAIL (before)', v ? v.before_screenshot : d.evidence.screenshot));
+    split.appendChild(side(after ? 'pass' : 'fail', after ? 'PASS (after fix)' : 'FAIL (not fixed)', v ? v.after_screenshot : null));
+    card.appendChild(split);
+    $('cards').appendChild(card);
+  });
+})();
+</script>
+</body>
+</html>
