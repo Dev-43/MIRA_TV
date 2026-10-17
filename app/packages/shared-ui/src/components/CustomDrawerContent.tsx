@@ -9,6 +9,8 @@ import { useCallback } from 'react';
 import { Direction } from '@bam.tech/lrud';
 import { getCloseDrawerDirection } from '../utils/rtl';
 
+import { reportFocus } from '../../../mira/reportFocus';
+
 export default function CustomDrawerContent(props: DrawerContentComponentProps) {
   const navigation = props.navigation;
   const { isOpen: isMenuOpen, toggleMenu } = useMenuContext();
@@ -56,6 +58,7 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
                     navigation.closeDrawer();
                     toggleMenu(false);
                   }}
+                  onFocus={() => reportFocus('home', `home.drawer.${index + 1}`)}
                 >
                   {({ isFocused }) => (
                     <View style={[styles.menuItem, isFocused && styles.menuItemFocused]}>
@@ -72,6 +75,7 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
                   navigation.closeDrawer();
                   toggleMenu(false);
                 }}
+                onFocus={() => reportFocus('home', `home.drawer.${index + 1}`)}
               >
                 {({ isFocused }) => (
                   <View style={[styles.menuItem, isFocused && styles.menuItemFocused]}>
@@ -91,6 +95,7 @@ export default function CustomDrawerContent(props: DrawerContentComponentProps) 
               navigation.closeDrawer();
               toggleMenu(false);
             }}
+            onFocus={() => reportFocus('home', 'home.drawer.settings')}
           >
             {({ isFocused }) => (
               <View style={[styles.settingsButton, isFocused && styles.settingsButtonFocused]}>

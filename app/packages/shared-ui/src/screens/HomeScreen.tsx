@@ -20,6 +20,7 @@ import { fetchMoviesData, CardData } from '../data/moviesData';
 import { colors, safeZones } from '../theme';
 import PlatformLinearGradient from '../components/PlatformLinearGradient';
 import { getOpenDrawerDirection } from '../utils/rtl';
+import { reportFocus } from '../../../mira/reportFocus';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'DrawerNavigator'>;
 
@@ -147,7 +148,10 @@ export default function HomeScreen() {
             duration: item.duration,
           });
         }}
-        onFocus={() => setFocusedIndex(index)}
+        onFocus={() => {
+          setFocusedIndex(index);
+          reportFocus('home', `home.card.${index + 1}`);
+        }}
       >
         {({ isFocused }) => <MovieItem item={item} isFocused={isFocused} styles={gridStyles} />}
       </SpatialNavigationFocusableView>

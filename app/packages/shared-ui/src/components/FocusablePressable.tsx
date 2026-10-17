@@ -10,39 +10,61 @@ import { scaledPixels } from "../hooks/useScale";
 import { SpatialNavigationFocusableView } from "react-tv-space-navigation";
 import { colors } from "../theme/colors";
 
+import { reportFocus } from "../../../mira/reportFocus";
+
 interface CustomPressableProps extends PressableProps {
   text: string;
   onSelect: () => void;
   style?: ViewStyle;
+  screen?: string;
+  elementId?: string;
 }
 
 const FocusablePressable = React.memo(({
   text,
   onSelect,
   style,
+  screen,
+  elementId,
   ...props
 }: CustomPressableProps) => {
+  const containerRef = React.useRef<View>(null);
   return (
-    <SpatialNavigationFocusableView onSelect={onSelect}>
+    <SpatialNavigationFocusableView
+      onSelect={onSelect}
+      onFocus={() => {
+        if (screen && elementId) {
+          if (containerRef.current?.measureInWindow) {
+            containerRef.current.measureInWindow((x, y, w, h) => {
+              reportFocus(screen, elementId, { x, y, w, h });
+            });
+          } else {
+            reportFocus(screen, elementId);
+          }
+        }
+      }}
+    >
       {({ isFocused }) => (
-        <Pressable
-          {...props}
-          style={[
-            styles.watchButton,
-            isFocused && styles.watchButtonFocused,
-            style,
-          ]}
-          onPress={onSelect}
-        >
-          <Text
+        <View ref={containerRef}>
+          <Pressable
+            {...props}
             style={[
-              styles.watchButtonText,
-              isFocused && styles.watchButtonTextFocused,
+              styles.watchButton,
+              isFocused && styles.watchButtonFocused,
+              style,
             ]}
+            onPress={onSelect}
           >
-            {text}
-          </Text>
-        </Pressable>
+            <Text
+              style={[
+                styles.watchButtonText,
+                isFocused && styles.watchButtonTextFocused,
+              ]}
+            >
+              {text}
+            </Text>
+          </Pressable>
+        </View>
       )}
     </SpatialNavigationFocusableView>
   );

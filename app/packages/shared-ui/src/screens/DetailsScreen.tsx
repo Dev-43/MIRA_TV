@@ -113,13 +113,24 @@ export default function DetailsScreen() {
                 <Text style={detailsStyles.crewName}>Eric Fahsl</Text>
               </View>
             </View>
-            <DefaultFocus>
+            <View style={{ flexDirection: 'row', gap: scaledPixels(20) }}>
+              <DefaultFocus>
+                <FocusablePressable
+                  text={'Watch now'}
+                  onSelect={navigate}
+                  style={buttonStyle}
+                  screen="details"
+                  elementId="details.btn.play"
+                />
+              </DefaultFocus>
               <FocusablePressable
-                text={'Watch now'}
-                onSelect={navigate}
+                text={'Add to list'}
+                onSelect={() => {}}
                 style={buttonStyle}
+                screen="details"
+                elementId="details.btn.addlist"
               />
-            </DefaultFocus>
+            </View>
           </View>
         </View>
       </View>
