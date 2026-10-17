@@ -80,3 +80,74 @@ def test_cache_hit_and_miss(tmp_path: Path) -> None:
     cache_file.write_text("NOT_VALID_JSON", encoding="utf-8")
     text3, source3 = engine.explain(defect, img)
     assert source3 == "stub"
+
+
+class FakeBedrockClient:
+    def __init__(self, response_text: str = "Live explanation from Bedrock Claude.", should_fail: bool = False):
+        self.response_text = response_text
+        self.should_fail = should_fail
+        self.calls = 0
+
+    def converse(self, **kwargs) -> dict:
+        self.calls += 1
+        if self.should_fail:
+            raise RuntimeError("Bedrock connection timeout")
+        return {
+            "output": {
+                "message": {
+                    "content": [{"text": self.response_text}],
+                }
+            }
+        }
+
+
+def test_live_mode_success_and_caching(tmp_path: Path) -> None:
+    fake_client = FakeBedrockClient(response_text="Focus is unreachable due to missing link.")
+    cfg = Config(bedrock_mode="live", bedrock_model_id="us.anthropic.claude-3-haiku-20240307-v1:0", max_ai_calls=5)
+    engine = ExplanationEngine(cfg=cfg, cache_dir=tmp_path, client=fake_client)
+    defect = Defect("UNREACHABLE", "details", "details.btn.addlist", [], "never focused")
+    img = b"fake-png-data"
+
+    text, source = engine.explain(defect, img)
+    assert source == "bedrock"
+    assert text == "Focus is unreachable due to missing link."
+    assert engine.ai_calls == 1
+    assert fake_client.calls == 1
+
+    # Verify response was persisted to disk cache
+    key = compute_cache_key(PROMPT_VERSION, cfg.bedrock_model_id, defect.id, img)
+    assert (tmp_path / f"{key}.json").is_file()
+
+
+def test_live_mode_hard_cap(tmp_path: Path) -> None:
+    fake_client = FakeBedrockClient(response_text="Explanation")
+    cfg = Config(bedrock_mode="live", bedrock_model_id="anthropic.claude", max_ai_calls=2)
+    engine = ExplanationEngine(cfg=cfg, cache_dir=tmp_path, client=fake_client)
+    defect = Defect("TRAP", "home", "home.card.4", ["RIGHT"], "trapped")
+    img = b"fake-png"
+
+    # First 2 calls succeed with live Bedrock
+    t1, s1 = engine.explain(defect, img)
+    assert s1 == "bedrock"
+    t2, s2 = engine.explain(defect, img)
+    assert s2 == "bedrock"
+    assert engine.ai_calls == 2
+    assert fake_client.calls == 2
+
+    # 3rd call exceeds max_ai_calls=2 -> falls back to stub, does NOT call client
+    t3, s3 = engine.explain(defect, img)
+    assert s3 == "stub"
+    assert fake_client.calls == 2  # Client was NOT called again
+
+
+def test_live_mode_exception_fallback(tmp_path: Path) -> None:
+    fake_client = FakeBedrockClient(should_fail=True)
+    cfg = Config(bedrock_mode="live", bedrock_model_id="anthropic.claude", max_ai_calls=5)
+    engine = ExplanationEngine(cfg=cfg, cache_dir=tmp_path, client=fake_client)
+    defect = Defect("NO_FOCUS_INDICATOR", "home", "home.card.2", ["RIGHT"], "diff < 4.0")
+    img = b"fake-png"
+
+    # Exception in Bedrock call must NOT crash; must return stub
+    text, source = engine.explain(defect, img)
+    assert source == "stub"
+    assert "home.card.2" in text

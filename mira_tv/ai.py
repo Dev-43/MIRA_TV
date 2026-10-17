@@ -67,10 +67,30 @@ def compute_cache_key(
 class ExplanationEngine:
     """Manages AI explanation generation across stub, cache, and live Bedrock modes."""
 
-    def __init__(self, cfg: Optional[Config] = None, cache_dir: Optional[Path] = None):
+    def __init__(
+        self,
+        cfg: Optional[Config] = None,
+        cache_dir: Optional[Path] = None,
+        client: Optional[Any] = None,
+    ):
         self.config = cfg or load_config()
         self.cache_dir = cache_dir or Path("ai_cache")
+        self._client = client
         self.ai_calls = 0
+
+    def _get_client(self) -> Any:
+        if self._client is not None:
+            return self._client
+        import boto3
+        from botocore.config import Config as BotoConfig
+
+        boto_cfg = BotoConfig(read_timeout=30, retries={"max_attempts": 2})
+        self._client = boto3.client(
+            "bedrock-runtime",
+            region_name=self.config.aws_region,
+            config=boto_cfg,
+        )
+        return self._client
 
     def get_cache_entry(self, key: str) -> Optional[str]:
         cache_file = self.cache_dir / f"{key}.json"
@@ -124,6 +144,41 @@ class ExplanationEngine:
                 return cached_text, "cache"
             # On miss fall back to stub
             return explain_stub(defect), "stub"
+
+        if mode == "live":
+            # Check hard cap MIRA_MAX_AI_CALLS
+            if self.ai_calls >= self.config.max_ai_calls:
+                logger.warning(
+                    "Bedrock max AI calls reached (%d/%d); falling back to stub",
+                    self.ai_calls,
+                    self.config.max_ai_calls,
+                )
+                return explain_stub(defect), "stub"
+
+            try:
+                client = self._get_client()
+                system = [{"text": SYSTEM_PROMPT}]
+                defect_payload = json.dumps(defect.to_dict())
+                user_content = [
+                    {"text": f"Defect description:\n{defect_payload}"},
+                    {"image": {"format": "png", "source": {"bytes": annotated_png}}},
+                ]
+                messages = [{"role": "user", "content": user_content}]
+                inference_cfg = {"maxTokens": 200, "temperature": 0.0}
+
+                response = client.converse(
+                    modelId=self.config.bedrock_model_id,
+                    system=system,
+                    messages=messages,
+                    inferenceConfig=inference_cfg,
+                )
+                self.ai_calls += 1
+                text = response["output"]["message"]["content"][0]["text"].strip()
+                self.put_cache_entry(key, text, defect.id)
+                return text, "bedrock"
+            except Exception as e:
+                logger.warning("Bedrock Converse call failed (%s); falling back to stub", e)
+                return explain_stub(defect), "stub"
 
         return explain_stub(defect), "stub"
 
