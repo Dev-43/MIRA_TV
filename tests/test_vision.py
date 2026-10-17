@@ -2,7 +2,7 @@
 from pathlib import Path
 from PIL import Image, ImageDraw
 
-from mira_tv.vision import indicator_diff
+from mira_tv.vision import detect_no_indicator, indicator_diff
 
 
 def test_indicator_diff_zero_or_invalid_bounds() -> None:
@@ -71,3 +71,35 @@ def test_indicator_diff_synthetic_fixture_shots() -> None:
     )
     assert buggy_diff is not None
     assert buggy_diff < 0.5  # Virtually 0.0 because border was omitted
+
+
+def test_detect_no_indicator_clean_and_bugs() -> None:
+    from mira_tv.explore import explore_screen
+    from mira_tv.fixture_driver import FixtureDriver
+
+    home_cfg = {
+        "screen": "home",
+        "entry_steps": [],
+        "exit_targets": ["home.drawer.1"],
+        "max_probes": 80,
+        "max_depth": 8,
+    }
+
+    # 1. Clean synthetic fixture -> 0 defects
+    clean_driver = FixtureDriver(Path("fixtures/synthetic_clean"))
+    clean_result = explore_screen(clean_driver, home_cfg)
+    clean_no_ind = detect_no_indicator(clean_result, diff_min=4.0)
+    assert clean_no_ind == []
+
+    # 2. Buggy synthetic fixture -> detects NO_FOCUS_INDICATOR:home.card.2
+    buggy_driver = FixtureDriver(Path("fixtures/synthetic_bugs"))
+    buggy_result = explore_screen(buggy_driver, home_cfg)
+    buggy_no_ind = detect_no_indicator(buggy_result, diff_min=4.0)
+    assert len(buggy_no_ind) == 1
+    d = buggy_no_ind[0]
+    assert d.id == "NO_FOCUS_INDICATOR:home.card.2"
+    assert d.type == "NO_FOCUS_INDICATOR"
+    assert d.screen == "home"
+    assert d.element_id == "home.card.2"
+    assert len(d.path) > 0
+    assert "indicator diff" in d.detail
