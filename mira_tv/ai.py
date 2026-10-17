@@ -67,9 +67,36 @@ def compute_cache_key(
 class ExplanationEngine:
     """Manages AI explanation generation across stub, cache, and live Bedrock modes."""
 
-    def __init__(self, cfg: Optional[Config] = None):
+    def __init__(self, cfg: Optional[Config] = None, cache_dir: Optional[Path] = None):
         self.config = cfg or load_config()
+        self.cache_dir = cache_dir or Path("ai_cache")
         self.ai_calls = 0
+
+    def get_cache_entry(self, key: str) -> Optional[str]:
+        cache_file = self.cache_dir / f"{key}.json"
+        if not cache_file.is_file():
+            return None
+        try:
+            data = json.loads(cache_file.read_text(encoding="utf-8"))
+            return data.get("text")
+        except Exception as e:
+            logger.warning("Failed to read cache file %s: %s", cache_file, e)
+            return None
+
+    def put_cache_entry(self, key: str, text: str, defect_id: str) -> None:
+        try:
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
+            cache_file = self.cache_dir / f"{key}.json"
+            payload = {
+                "key": key,
+                "prompt_version": PROMPT_VERSION,
+                "model_id": self.config.bedrock_model_id,
+                "defect_id": defect_id,
+                "text": text,
+            }
+            cache_file.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        except Exception as e:
+            logger.warning("Failed to write cache entry %s: %s", key, e)
 
     def explain(
         self,
@@ -84,7 +111,20 @@ class ExplanationEngine:
         if mode == "stub":
             return explain_stub(defect), "stub"
 
-        # cache and live modes are implemented in subsequent steps
+        key = compute_cache_key(
+            PROMPT_VERSION,
+            self.config.bedrock_model_id,
+            defect.id,
+            annotated_png,
+        )
+
+        if mode == "cache":
+            cached_text = self.get_cache_entry(key)
+            if cached_text:
+                return cached_text, "cache"
+            # On miss fall back to stub
+            return explain_stub(defect), "stub"
+
         return explain_stub(defect), "stub"
 
 
