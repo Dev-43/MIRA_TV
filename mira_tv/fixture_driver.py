@@ -108,5 +108,20 @@ class FixtureDriver(Driver):
         except OSError as e:
             raise DriverError(f"Failed to read screenshot '{shot_path}': {e}") from e
 
+    def swap_fixture(self, new_fixture_dir: Union[str, Path]) -> None:
+        """Swap fixture source directory (e.g., from synthetic_bugs to synthetic_clean)."""
+        self.fixture_dir = Path(new_fixture_dir)
+        fixture_file = self.fixture_dir / "fixture.json"
+        if not fixture_file.exists():
+            raise DriverError(f"fixture.json not found in {self.fixture_dir}")
+        try:
+            with open(fixture_file, "r", encoding="utf-8") as f:
+                self.data = json.load(f)
+        except Exception as e:
+            raise DriverError(f"Failed to load fixture.json from {self.fixture_dir}: {e}") from e
+
+        self.elements = self.data.get("elements", {})
+        self.entry = self.data.get("entry", {})
+
     def close(self) -> None:
         self.current_element = None
