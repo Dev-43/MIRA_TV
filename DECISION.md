@@ -264,3 +264,15 @@ mira-tv/
 - **Files Modified / Added**: `mira_tv/patches.py`, `mira_tv/verify.py`, `report/build_report.py`, `mira_tv/demo.py`, `mira_tv/cli.py`, `tests/test_patches.py`, `tests/test_verify.py`, `tests/test_report.py`, `tests/test_demo.py`, `DECISION.md`.
 - **Integration Impact**: The entire Python engine is 100% complete, fully tested (97 tests passing), and verified against all acceptance criteria. Engine is fully ready for live integration with Teammate V.
 
+### [ADR-011] Production Readiness Strategy: Offline Development Isolation and Deferred Live API Activation
+- **Date**: 2026-10-17
+- **Author**: D (Engine)
+- **Scope / Component**: Deployment strategy, AWS Bedrock configuration, timeline management, integration readiness
+- **Context & Problem**: Evaluated whether to configure live AWS Bedrock credentials incrementally during mid-stage development or defer `.env` API activation until all engine phases (D1–D8) are fully built and verified offline. Also considered schedule pacing to optimize time available for cross-team debugging.
+- **Decision Taken**:
+  1. **Offline Isolation During Active Build**: Completed the entire exploration, detection, verification, and reporting pipeline in `stub` mode using synthetic fixtures. This eliminates premature cloud costs, avoids accidental credential leakage in development branches, and isolates engine logic from network flakiness.
+  2. **Deferred Production API Activation**: Configuring `.env` with live AWS Bedrock credentials (`AWS_BEARER_TOKEN_BEDROCK`, `BEDROCK_MODEL_ID`) is deferred to the final integration phase. At that stage, `ai-ping` will validate connectivity and the live `demo` will populate `ai_cache/` in one comprehensive end-to-end verification.
+  3. **Front-Loaded Timeline Buffer**: Accelerated and completed all October 19 milestones on October 17. This deliberately opens a 48+ hour buffer dedicated exclusively to live Android TV emulator integration, threshold tuning (`MIRA_INDICATOR_DIFF_MIN`), and friction debugging with Teammate V.
+- **Files Modified / Added**: `DECISION.md`.
+- **Integration Impact**: Both teammates proceed with zero blockers. Teammate V receives a complete, robust, 100% test-passing engine ready for live device pairing.
+
