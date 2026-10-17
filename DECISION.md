@@ -250,3 +250,17 @@ mira-tv/
 - **Files Modified / Added**: `mira_tv/detectors.py`, `mira_tv/vision.py`, `mira_tv/ai.py`, `mira_tv/cli.py`, `tests/test_detectors.py`, `tests/test_vision.py`, `tests/test_ai.py`, `tests/test_cli.py`, `DECISION.md`.
 - **Integration Impact**: The core detection and AI explanation pipelines are complete and tested offline against synthetic clean and buggy fixtures. Ready for Task D7 (patch verification and demo) and integration with V's real fixtures.
 
+### [ADR-010] Patch Management, Fix Verification Loop, Report Compiler, and Demo Runner (D7–D8 Milestone)
+- **Date**: 2026-10-17
+- **Author**: D (Engine)
+- **Scope / Component**: `mira_tv/patches.py`, `mira_tv/verify.py`, `report/build_report.py`, `mira_tv/demo.py`, `mira_tv/cli.py`, `tests/test_patches.py`, `tests/test_verify.py`, `tests/test_report.py`, `tests/test_demo.py`
+- **Context & Problem**: To complete the automated QA loop (Tasks D7 and D8), the engine must verify defect fixes by re-exploring the UI, guarantee zero regressions, generate red/green split evidence, produce compliant C2 `report.json` and standalone C5 `report.html`, and restore the codebase cleanly even on runtime failures.
+- **Decision Taken**:
+  1. **Strict Patch Lifecycle (`mira_tv/patches.py`)**: Unified git diff application and reversal always executes `git apply --check` and `git apply --reverse --check` prior to touching files, enforcing 20s execution timeouts and raising explicit `PatchError` on conflicts.
+  2. **Defect Verification & Regression Rule (`mira_tv/verify.py`)**: Re-explores only the affected screen after fix application. Flags `after = PASS` if and only if the target defect is resolved AND no new defects are introduced. Annotates before screenshots with red (6px) and after screenshots with green (6px).
+  3. **Offline Single-File HTML Report Compiler (`report/build_report.py`)**: Implements Contract C5. Replaces `<link rel="stylesheet" href="style.css">` with an inline `<style>` block, replaces `/*__MIRA_REPORT_JSON__*/null` with the serialized report JSON, copies referenced screenshots into run directory, and writes `report.html` viewable offline from `file://`.
+  4. **Autonomous Demo Orchestrator (`mira_tv/demo.py`)**: Chains the full lifecycle (explore $\rightarrow$ detect $\rightarrow$ explain $\rightarrow$ verify $\rightarrow$ report) with guaranteed cleanup in a `finally` block (reverting fixes then bugs). Supports fixture mode by swapping `fixtures/synthetic_bugs` $\rightarrow$ `fixtures/synthetic_clean` per defect element.
+  5. **Smoke Test Passing**: `scripts/smoke.ps1` runs all 97 tests and executes `python -m mira_tv demo --mode fixture` producing `SMOKE PASS`.
+- **Files Modified / Added**: `mira_tv/patches.py`, `mira_tv/verify.py`, `report/build_report.py`, `mira_tv/demo.py`, `mira_tv/cli.py`, `tests/test_patches.py`, `tests/test_verify.py`, `tests/test_report.py`, `tests/test_demo.py`, `DECISION.md`.
+- **Integration Impact**: The entire Python engine is 100% complete, fully tested (97 tests passing), and verified against all acceptance criteria. Engine is fully ready for live integration with Teammate V.
+
