@@ -1,5 +1,17 @@
 {
-  "_comment": "V lists every interactive element per screen from docs/APP_MAP.md. Keys starting with _ are ignored by the engine.",
-  "home": ["home.drawer.1"],
-  "details": ["details.btn.play"]
+  "_comment": "Interactive elements expected per screen from docs/APP_MAP.md",
+  "home": [
+    "home.drawer.1",
+    "home.drawer.2",
+    "home.drawer.3",
+    "home.drawer.settings",
+    "home.card.1",
+    "home.card.2",
+    "home.card.3",
+    "home.card.4"
+  ],
+  "details": [
+    "details.btn.play",
+    "details.btn.addlist"
+  ]
 }
