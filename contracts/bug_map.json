@@ -1,6 +1,6 @@
 {
-  "_comment": "Placeholder entries: V replaces them with the real defect ids after Task V4. Key = '<TYPE>:<element_id>'. Keys starting with _ are ignored by the engine.",
+  "_comment": "Real defect IDs mapped to bug and fix patch files (Task V4)",
   "UNREACHABLE:details.btn.addlist": {"screen": "details", "bug": "bugs/BUG-01-unreachable.patch", "fix": "fixes/FIX-01-unreachable.patch"},
-  "TRAP:home.card.4": {"screen": "home", "bug": "bugs/BUG-02-trap.patch", "fix": "fixes/FIX-02-trap.patch"},
+  "TRAP:home.card.1": {"screen": "home", "bug": "bugs/BUG-02-trap.patch", "fix": "fixes/FIX-02-trap.patch"},
   "NO_FOCUS_INDICATOR:home.card.2": {"screen": "home", "bug": "bugs/BUG-03-no-indicator.patch", "fix": "fixes/FIX-03-no-indicator.patch"}
 }

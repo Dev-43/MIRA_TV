@@ -18,6 +18,7 @@ interface CustomPressableProps extends PressableProps {
   style?: ViewStyle;
   screen?: string;
   elementId?: string;
+  isFocusable?: boolean;
 }
 
 const FocusablePressable = React.memo(({
@@ -26,9 +27,25 @@ const FocusablePressable = React.memo(({
   style,
   screen,
   elementId,
+  isFocusable = true,
   ...props
 }: CustomPressableProps) => {
   const containerRef = React.useRef<View>(null);
+
+  if (!isFocusable) {
+    return (
+      <View ref={containerRef}>
+        <Pressable
+          {...props}
+          style={[styles.watchButton, style]}
+          onPress={onSelect}
+        >
+          <Text style={styles.watchButtonText}>{text}</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
   return (
     <SpatialNavigationFocusableView
       onSelect={onSelect}
