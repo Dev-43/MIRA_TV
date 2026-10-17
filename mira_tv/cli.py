@@ -11,7 +11,7 @@ from .config import load_config
 from .driver import DriverError
 from .telemetry import parse_lines
 
-NOT_YET = ["explore", "verify", "report", "demo", "ai-ping"]
+NOT_YET = ["explore", "verify", "report", "demo"]
 
 
 def _validate_events(path: str) -> int:
@@ -75,6 +75,20 @@ def _record(out_dir: str, scenario_path: str, driver_type: str, fixture_dir: str
         driver.close()
 
 
+def _ai_ping() -> int:
+    from .ai import ai_ping
+    cfg = load_config()
+    if cfg.bedrock_mode.lower() == "stub":
+        print("OK (stub)")
+        return 0
+    ok = ai_ping(cfg)
+    if ok:
+        print("OK")
+        return 0
+    print("FAIL: Bedrock ping failed or credentials not configured", file=sys.stderr)
+    return 2
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="mira_tv", description="MIRA TV remote-control QA agent")
     p.add_argument("--version", action="version", version=f"mira_tv {__version__}")
@@ -88,6 +102,8 @@ def build_parser() -> argparse.ArgumentParser:
     rec.add_argument("--scenario", default="contracts/scenario.json", help="path to scenario.json")
     rec.add_argument("--driver", choices=["adb", "fixture"], default="adb", help="driver to use")
     rec.add_argument("--fixture", default=None, help="fixture folder when --driver is fixture")
+
+    sub.add_parser("ai-ping", help="test Bedrock Converse connectivity or stub mode")
 
     for name in NOT_YET:
         sub.add_parser(name, help="(not implemented yet)")
@@ -104,5 +120,7 @@ def main(argv=None) -> int:
         return _validate_events(args.file)
     if args.command == "record":
         return _record(args.out, args.scenario, args.driver, args.fixture)
+    if args.command == "ai-ping":
+        return _ai_ping()
     print(f"'{args.command}' is not implemented yet", file=sys.stderr)
     return 2

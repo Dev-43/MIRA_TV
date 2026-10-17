@@ -198,3 +198,39 @@ def explain(
     if _DEFAULT_ENGINE is None:
         _DEFAULT_ENGINE = ExplanationEngine()
     return _DEFAULT_ENGINE.explain(defect, annotated_png)
+
+
+def ai_ping(cfg: Optional[Config] = None, client: Optional[Any] = None) -> bool:
+    """Test Bedrock connectivity without leaking API keys or credentials.
+
+    Returns True if successful or in stub mode, False on failure.
+    """
+    config = cfg or load_config()
+    if config.bedrock_mode.lower() == "stub":
+        return True
+
+    if not config.bedrock_model_id:
+        logger.error("ai-ping failed: BEDROCK_MODEL_ID is not configured")
+        return False
+
+    try:
+        if client is None:
+            import boto3
+            from botocore.config import Config as BotoConfig
+
+            boto_cfg = BotoConfig(read_timeout=15, retries={"max_attempts": 1})
+            client = boto3.client(
+                "bedrock-runtime",
+                region_name=config.aws_region,
+                config=boto_cfg,
+            )
+
+        response = client.converse(
+            modelId=config.bedrock_model_id,
+            messages=[{"role": "user", "content": [{"text": "ping"}]}],
+            inferenceConfig={"maxTokens": 10},
+        )
+        return bool(response.get("output"))
+    except Exception as e:
+        logger.error("Bedrock ping call failed: %s", type(e).__name__)
+        return False
