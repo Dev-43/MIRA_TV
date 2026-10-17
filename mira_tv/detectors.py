@@ -71,3 +71,54 @@ def detect_unreachable(
 
     defects.sort(key=lambda d: (d.screen, d.type, d.element_id))
     return defects
+
+
+def detect_trap(
+    result: ScreenResult,
+    exit_targets: Sequence[str],
+) -> List[Defect]:
+    """Compute reverse_reachable from exit_targets plus any node on another screen.
+
+    Every visited node on this screen not in that set is trapped.
+    Reports one TRAP defect for the first trapped node in BFS order:
+    - path: shortest path from screen entry to it
+    - detail: how many nodes are in the trapped region
+    """
+    screen_nodes = [
+        node_id
+        for node_id, data in result.graph.nodes.items()
+        if data.screen == result.screen
+    ]
+    if not screen_nodes:
+        return []
+
+    # Target set: designated exit targets + any discovered node on a different screen
+    all_targets = set(exit_targets)
+    for node_id, data in result.graph.nodes.items():
+        if data.screen != result.screen:
+            all_targets.add(node_id)
+
+    escapable = result.graph.reverse_reachable(all_targets)
+    trapped_nodes = [node_id for node_id in screen_nodes if node_id not in escapable]
+
+    if not trapped_nodes:
+        return []
+
+    # First trapped node encountered in BFS order
+    first_trapped = trapped_nodes[0]
+    entry_id = screen_nodes[0]
+    path = result.graph.shortest_path(entry_id, first_trapped) or []
+
+    detail = (
+        f"{len(trapped_nodes)} node(s) in trapped region: "
+        f"{', '.join(sorted(trapped_nodes))}"
+    )
+
+    defect = Defect(
+        type="TRAP",
+        screen=result.screen,
+        element_id=first_trapped,
+        path=path,
+        detail=detail,
+    )
+    return [defect]
