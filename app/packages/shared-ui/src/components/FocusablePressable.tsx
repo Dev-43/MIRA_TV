@@ -11,7 +11,7 @@ import { scaledPixels } from "../hooks/useScale";
 import { SpatialNavigationFocusableView } from "react-tv-space-navigation";
 import { colors } from "../theme/colors";
 
-import { reportFocus } from "../../../mira/reportFocus";
+import { reportFocus } from "../../../../mira/reportFocus";
 
 interface CustomPressableProps extends PressableProps {
   text: string;

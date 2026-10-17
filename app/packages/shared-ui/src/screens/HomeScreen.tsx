@@ -20,7 +20,7 @@ import { fetchMoviesData, CardData } from '../data/moviesData';
 import { colors, safeZones } from '../theme';
 import PlatformLinearGradient from '../components/PlatformLinearGradient';
 import { getOpenDrawerDirection } from '../utils/rtl';
-import { reportFocus } from '../../../mira/reportFocus';
+import { reportFocus } from '../../../../mira/reportFocus';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'DrawerNavigator'>;
 

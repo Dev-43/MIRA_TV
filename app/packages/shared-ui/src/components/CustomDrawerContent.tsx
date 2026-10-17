@@ -9,7 +9,7 @@ import { useCallback } from 'react';
 import { Direction } from '@bam.tech/lrud';
 import { getCloseDrawerDirection } from '../utils/rtl';
 
-import { reportFocus } from '../../../mira/reportFocus';
+import { reportFocus } from '../../../../mira/reportFocus';
 
 export default function CustomDrawerContent(props: DrawerContentComponentProps) {
   const navigation = props.navigation;
