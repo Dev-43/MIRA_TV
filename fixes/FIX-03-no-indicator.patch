@@ -1,0 +1,13 @@
+﻿diff --git b/app/packages/shared-ui/src/screens/HomeScreen.tsx a/app/packages/shared-ui/src/screens/HomeScreen.tsx
+index ec08ddd..82d5a47 100644
+--- b/app/packages/shared-ui/src/screens/HomeScreen.tsx
++++ a/app/packages/shared-ui/src/screens/HomeScreen.tsx
+@@ -153,7 +153,7 @@ export default function HomeScreen() {
+           reportFocus('home', `home.card.${index + 1}`);
+         }}
+       >
+-        {({ isFocused }) => <MovieItem item={item} isFocused={isFocused && index !== 1} styles={gridStyles} />}
++        {({ isFocused }) => <MovieItem item={item} isFocused={isFocused} styles={gridStyles} />}
+       </SpatialNavigationFocusableView>
+     ),
+     [navigation],
