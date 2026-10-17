@@ -225,3 +225,28 @@ mira-tv/
 - **Files Modified / Added**: `mira_tv/make_synthetic.py`, `fixtures/synthetic_clean/**`, `fixtures/synthetic_bugs/**`, `mira_tv/fixture_driver.py`, `mira_tv/adb_driver.py`, `mira_tv/graph.py`, `mira_tv/explore.py`, `mira_tv/record.py`, `mira_tv/cli.py`, `tests/test_fixture_driver.py`, `tests/test_adb_driver.py`, `tests/test_graph.py`, `tests/test_explore.py`, `tests/test_record.py`, `tests/test_cli.py`, `tests/test_telemetry.py`, `DECISION.md`.
 - **Integration Impact**: Milestone CP0 requirement ("record exists") is met. V can now execute `python -m mira_tv record --out fixtures/real_clean` on their laptop to capture real Android TV app fixtures.
 
+### [ADR-008] Granular Commit Protocol and Deferred Integration Merge Strategy
+- **Date**: 2026-10-17
+- **Author**: D (Engine)
+- **Scope / Component**: Git workflow, branches, commit granularity, checkpoint review
+- **Context & Problem**: As development enters Day 2 (Tasks D4-D6 detectors, vision, and AI), team agreed that commits should not be bundled in large multi-responsibility chunks. Additionally, merging to `main` must be orchestrated cleanly at formal integration checkpoints.
+- **Decision Taken**:
+  1. **Granular Commit Protocol**: Each feature, algorithm step, and sub-system is committed atomically alongside its corresponding unit tests (e.g., separating UNREACHABLE detection from TRAP detection, isolating pixel diff math from annotation).
+  2. **Deferred Merge to Integration**: The working branch (`d/drivers-and-fixtures`) accumulates all granular commits throughout the active build phase. Merging into `main` will occur exclusively during the unified integration milestone once cross-boundary acceptance tests pass.
+- **Files Modified / Added**: `DECISION.md`.
+- **Integration Impact**: Teammate V can track granular progress on D's branch without uncoordinated fast-forwards on `main`.
+
+### [ADR-009] Deterministic Defect Detection, Focus Indicator Vision Math, and Bedrock Explanation Layer (D4–D6 Milestone)
+- **Date**: 2026-10-17
+- **Author**: D (Engine)
+- **Scope / Component**: `mira_tv/detectors.py`, `mira_tv/vision.py`, `mira_tv/ai.py`, `mira_tv/cli.py`, `tests/test_detectors.py`, `tests/test_vision.py`, `tests/test_ai.py`, `tests/test_cli.py`
+- **Context & Problem**: To complete the engine analysis capabilities for Day 2, the system must deterministically detect `UNREACHABLE`, `TRAP`, and `NO_FOCUS_INDICATOR` defects, annotate screenshot evidence, and produce developer explanations via Bedrock Converse while honoring strict determinism, caching, timeout, and call-cap guardrails.
+- **Decision Taken**:
+  1. **Defect Dataclass & UNREACHABLE Detection**: Implemented `Defect` matching Contract C2 with deterministic sorting by `(screen, type, element_id)`. `detect_unreachable` compares expected element IDs against `graph.nodes`.
+  2. **TRAP Detection via Reverse Reachability**: `detect_trap` evaluates `Graph.reverse_reachable` starting from specified `exit_targets` and any discovered elements on other screens. The first unreachable node in BFS order is flagged as the root trap with its shortest key path from entry and region element count.
+  3. **Focus Indicator Pixel Math & Annotation**: `indicator_diff` calculates mean absolute pixel difference across RGB channels over the element's bounding box using pure Pillow (`ImageChops.difference` and `ImageStat.Stat`), comparing focused state against an unfocused neighbor. Elements below `MIRA_INDICATOR_DIFF_MIN` (default 4.0) are flagged as `NO_FOCUS_INDICATOR`. Zero/invalid bounds return `None` and are skipped per spec. `annotate` draws a 6px border and downscales to max width 1280.
+  4. **Bedrock Converse Explanation Layer**: `ExplanationEngine` implements the fixed 60-word developer system prompt (`PROMPT_VERSION = "1"`), deterministic template stubs, SHA-256 disk caching in `ai_cache/`, `MIRA_MAX_AI_CALLS` hard cap (12 calls), 30s timeout, 2 retries, and silent fallback to stub on exceptions (never crashes a run).
+  5. **`ai-ping` CLI Sub-command**: Wired `ai-ping` into `mira_tv/cli.py` to allow validating Bedrock connectivity or stub mode without leaking API tokens or secrets.
+- **Files Modified / Added**: `mira_tv/detectors.py`, `mira_tv/vision.py`, `mira_tv/ai.py`, `mira_tv/cli.py`, `tests/test_detectors.py`, `tests/test_vision.py`, `tests/test_ai.py`, `tests/test_cli.py`, `DECISION.md`.
+- **Integration Impact**: The core detection and AI explanation pipelines are complete and tested offline against synthetic clean and buggy fixtures. Ready for Task D7 (patch verification and demo) and integration with V's real fixtures.
+
