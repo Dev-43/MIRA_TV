@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import io
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple, Union
-from PIL import Image, ImageChops, ImageStat
+from PIL import Image, ImageChops, ImageDraw, ImageStat
 
 if TYPE_CHECKING:
     from .detectors import Defect
@@ -147,3 +147,44 @@ def detect_no_indicator(
 
     defects.sort(key=lambda d: (d.screen, d.type, d.element_id))
     return defects
+
+
+def annotate(
+    png_bytes: bytes,
+    bounds: Union[Dict[str, Any], Tuple[int, int, int, int], Sequence[int]],
+    color: Union[Tuple[int, int, int], str] = (255, 0, 0),
+) -> bytes:
+    """Draw a 6 px rectangle around element bounds and downscale image to max width 1280.
+
+    Color can be (R, G, B) or 'red' / 'green'.
+    """
+    im = Image.open(io.BytesIO(png_bytes)).convert("RGB")
+
+    # Map color names if string
+    outline_color: Tuple[int, int, int]
+    if isinstance(color, str):
+        c = color.strip().lower()
+        if c == "green":
+            outline_color = (0, 220, 100)
+        else:  # default to red
+            outline_color = (255, 60, 60)
+    else:
+        outline_color = (int(color[0]), int(color[1]), int(color[2]))
+
+    norm = _normalize_bounds(bounds)
+    if norm is not None:
+        x, y, w, h = norm
+        draw = ImageDraw.Draw(im)
+        draw.rectangle([x, y, x + w, y + h], outline=outline_color, width=6)
+
+    # Downscale to max width 1280
+    max_width = 1280
+    if im.width > max_width:
+        ratio = max_width / im.width
+        new_height = max(1, int(im.height * ratio))
+        resample = getattr(Image, "Resampling", Image).LANCZOS
+        im = im.resize((max_width, new_height), resample=resample)
+
+    out = io.BytesIO()
+    im.save(out, format="PNG")
+    return out.getvalue()

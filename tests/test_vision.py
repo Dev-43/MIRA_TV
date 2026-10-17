@@ -2,7 +2,7 @@
 from pathlib import Path
 from PIL import Image, ImageDraw
 
-from mira_tv.vision import detect_no_indicator, indicator_diff
+from mira_tv.vision import annotate, detect_no_indicator, indicator_diff
 
 
 def test_indicator_diff_zero_or_invalid_bounds() -> None:
@@ -103,3 +103,35 @@ def test_detect_no_indicator_clean_and_bugs() -> None:
     assert d.element_id == "home.card.2"
     assert len(d.path) > 0
     assert "indicator diff" in d.detail
+
+
+def test_annotate_downscales_and_draws() -> None:
+    import io
+
+    # Create 1920x1080 test image
+    orig = Image.new("RGB", (1920, 1080), (20, 20, 20))
+    buf = io.BytesIO()
+    orig.save(buf, format="PNG")
+    png_bytes = buf.getvalue()
+
+    # Annotate with red rectangle
+    bounds = {"x": 200, "y": 200, "w": 400, "h": 300}
+    ann_bytes = annotate(png_bytes, bounds, color="red")
+
+    ann_im = Image.open(io.BytesIO(ann_bytes))
+    assert ann_im.width == 1280
+    assert ann_im.height == 720  # proportional 16:9
+
+    # Annotate already small image (800x600) -> stays 800 width
+    small = Image.new("RGB", (800, 600), (30, 30, 30))
+    small_buf = io.BytesIO()
+    small.save(small_buf, format="PNG")
+    small_ann = annotate(small_buf.getvalue(), (10, 10, 50, 50), color="green")
+    small_im = Image.open(io.BytesIO(small_ann))
+    assert small_im.width == 800
+    assert small_im.height == 600
+
+    # Annotate with zero bounds should not raise
+    zero_ann = annotate(png_bytes, (0, 0, 0, 0))
+    zero_im = Image.open(io.BytesIO(zero_ann))
+    assert zero_im.width == 1280
