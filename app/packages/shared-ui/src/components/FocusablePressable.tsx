@@ -2,6 +2,7 @@ import React from "react";
 import {
   Pressable,
   Text,
+  View,
   StyleSheet,
   PressableProps,
   ViewStyle,
