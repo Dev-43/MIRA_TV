@@ -1,0 +1,12 @@
+﻿diff --git b/app/packages/shared-ui/src/screens/DetailsScreen.tsx a/app/packages/shared-ui/src/screens/DetailsScreen.tsx
+index 1d0d7f4..2da9f93 100644
+--- b/app/packages/shared-ui/src/screens/DetailsScreen.tsx
++++ a/app/packages/shared-ui/src/screens/DetailsScreen.tsx
+@@ -129,7 +129,6 @@ export default function DetailsScreen() {
+                 style={buttonStyle}
+                 screen="details"
+                 elementId="details.btn.addlist"
+-                isFocusable={false}
+               />
+             </View>
+           </View>

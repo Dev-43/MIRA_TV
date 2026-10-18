@@ -1,0 +1,13 @@
+﻿diff --git b/app/packages/shared-ui/src/screens/HomeScreen.tsx a/app/packages/shared-ui/src/screens/HomeScreen.tsx
+index 82c8822..82d5a47 100644
+--- b/app/packages/shared-ui/src/screens/HomeScreen.tsx
++++ a/app/packages/shared-ui/src/screens/HomeScreen.tsx
+@@ -122,7 +122,7 @@ export default function HomeScreen() {
+ 
+   const onDirectionHandledWithoutMovement = useCallback(
+     (movement: Direction) => {
+-      if (false && movement === getOpenDrawerDirection() && focusedIndex === 0) {
++      if (movement === getOpenDrawerDirection() && focusedIndex === 0) {
+         navigation.dispatch(DrawerActions.openDrawer());
+         toggleMenu(true);
+       }
