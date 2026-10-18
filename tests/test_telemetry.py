@@ -49,3 +49,25 @@ def test_parse_lines_counts_bad():
 def test_never_raises_on_garbage():
     for g in ["", "{", "}", "MIRA_FOCUS ", "MIRA_FOCUS {", "MIRA_FOCUS }{", "MIRA_FOCUS [1,2]"]:
         assert parse_line(g) is None
+
+
+def test_noisy_logcat_stream_with_escapes_and_trailing():
+    noisy = (
+        "04-16 20:15:33.456 1234 5678 D ReactNativeJS: [MIRA] log message before "
+        'MIRA_FOCUS {"seq":4,"screen":"home","element_id":"home.card.2","bounds":{"x":600,"y":500,"w":340,"h":220},"ts":1760000000001}'
+        " (trailing React stack trace or log metadata)\n"
+    )
+    ev = parse_line(noisy)
+    assert ev is not None
+    assert ev.element_id == "home.card.2"
+    assert ev.seq == 4
+    assert ev.bounds == (600, 500, 340, 220)
+
+
+def test_zero_bounds_allowed():
+    # As per spec: (0,0,0,0) = unknown bounds, should be accepted
+    zero_bounds = dict(PAYLOAD, bounds={"x": 0, "y": 0, "w": 0, "h": 0}, seq=5)
+    ev = parse_line("MIRA_FOCUS " + json.dumps(zero_bounds))
+    assert ev is not None
+    assert ev.bounds == (0, 0, 0, 0)
+

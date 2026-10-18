@@ -56,6 +56,10 @@ def _float(v: str, default: float) -> float:
 def load_config(env: dict[str, str] | None = None, dotenv_path: str = ".env") -> Config:
     merged = dict(load_dotenv(dotenv_path))
     merged.update(os.environ if env is None else env)
+    # Forward AWS credential variables to os.environ so boto3 discovers them
+    for aws_key in ("AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN", "AWS_REGION", "AWS_DEFAULT_REGION", "AWS_BEARER_TOKEN_BEDROCK"):
+        if aws_key in merged and aws_key not in os.environ:
+            os.environ[aws_key] = merged[aws_key]
     d = Config()
     mode = merged.get("MIRA_BEDROCK_MODE", d.bedrock_mode).lower()
     if mode not in ("stub", "cache", "live"):

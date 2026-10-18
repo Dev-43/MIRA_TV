@@ -7,7 +7,9 @@
 
 # Output & Artifacts
 artifacts/
-shots/
+/shot.png
+/shots/
+!fixtures/**/shots/
 *.log
 
 # Python
