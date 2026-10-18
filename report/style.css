@@ -1,14 +1,522 @@
-:root { color-scheme: dark; }
-body { margin: 0; padding: 24px; background: #101418; color: #e8eaed; font: 18px/1.5 system-ui, Segoe UI, Arial, sans-serif; }
-header h1 { margin: 0 0 4px; }
-#meta, #summary { color: #9aa4ad; }
-.card { background: #181e24; border: 1px solid #2a323b; border-radius: 10px; padding: 16px; margin: 16px 0; }
-.card h2 { margin: 0 0 8px; font-size: 1.1em; }
-.path { font-family: Consolas, monospace; color: #c3cad1; }
-.split { display: flex; gap: 16px; flex-wrap: wrap; }
-.side { flex: 1 1 320px; border: 6px solid; border-radius: 8px; padding: 8px; }
-.side.fail { border-color: #e5484d; }
-.side.pass { border-color: #30a46c; }
-.side img { max-width: 100%; display: block; margin-top: 8px; }
-.badge { font-weight: 700; }
-footer { color: #9aa4ad; margin-top: 24px; font-size: 0.9em; }
+:root {
+  color-scheme: dark;
+  --bg-primary: #0a0e14;
+  --bg-secondary: #121820;
+  --bg-card: #161f2c;
+  --bg-card-hover: #1c2738;
+  --bg-card-alt: #0d131a;
+  --border-color: #233044;
+  --border-subtle: #1a2332;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent-blue: #38bdf8;
+  --accent-cyan: #06b6d4;
+  --pass-color: #10b981;
+  --pass-bg: rgba(16, 185, 129, 0.12);
+  --pass-border: #10b981;
+  --fail-color: #ef4444;
+  --fail-bg: rgba(239, 68, 68, 0.12);
+  --fail-border: #ef4444;
+  --unreachable-badge: #f43f5e;
+  --trap-badge: #f59e0b;
+  --no-indicator-badge: #a855f7;
+  --chip-bg: #1e293b;
+  --chip-border: #334155;
+  --chip-text: #e2e8f0;
+  --ai-badge-bg: rgba(56, 189, 248, 0.15);
+  --ai-badge-border: rgba(56, 189, 248, 0.35);
+  --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 32px 24px;
+  background-color: var(--bg-primary);
+  background-image: radial-gradient(circle at 50% 0%, #152233 0%, var(--bg-primary) 70%);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 18px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1360px;
+  margin: 0 auto;
+}
+
+/* Header */
+header {
+  margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.header-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #ffffff 40%, #94a3b8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-badge {
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #0284c7, #0369a1);
+  color: #ffffff;
+  -webkit-text-fill-color: initial;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 0 12px rgba(2, 132, 199, 0.4);
+}
+
+.header-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-secondary);
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+}
+
+.meta-item strong {
+  color: var(--text-primary);
+  font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+}
+
+.mode-badge {
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+.mode-badge.live {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--pass-color);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.mode-badge.fixture {
+  background: rgba(56, 189, 248, 0.2);
+  color: var(--accent-blue);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
+/* Summary Bar */
+.summary-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 36px;
+}
+
+.summary-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.summary-card:hover {
+  border-color: #3b82f6;
+  transform: translateY(-2px);
+}
+
+.summary-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.summary-val {
+  font-size: 2.2rem;
+  font-weight: 800;
+  font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+  line-height: 1;
+}
+
+.summary-card.defects .summary-val {
+  color: #f43f5e;
+}
+
+.summary-card.verified .summary-val {
+  color: #10b981;
+}
+
+.summary-card.ai .summary-val {
+  color: #38bdf8;
+}
+
+.summary-card.screens .summary-val {
+  color: #cbd5e1;
+}
+
+/* Section Title */
+.section-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0 0 16px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Defect Cards */
+.cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  margin-bottom: 40px;
+}
+
+.defect-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.card-header-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.defect-type-badge {
+  font-size: 0.95rem;
+  font-weight: 800;
+  padding: 6px 14px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+}
+
+.defect-type-badge.unreachable {
+  background: rgba(244, 63, 94, 0.18);
+  color: var(--unreachable-badge);
+  border: 1px solid var(--unreachable-badge);
+}
+
+.defect-type-badge.trap {
+  background: rgba(245, 158, 11, 0.18);
+  color: var(--trap-badge);
+  border: 1px solid var(--trap-badge);
+}
+
+.defect-type-badge.no-focus-indicator {
+  background: rgba(168, 85, 247, 0.18);
+  color: var(--no-indicator-badge);
+  border: 1px solid var(--no-indicator-badge);
+}
+
+.element-id-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+  color: #ffffff;
+}
+
+.screen-badge {
+  font-size: 0.9rem;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.screen-badge span {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Key Path Chips */
+.path-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+  background: var(--bg-card-alt);
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+}
+
+.path-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-right: 4px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--chip-bg);
+  border: 1px solid var(--chip-border);
+  border-radius: 5px;
+  padding: 3px 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+  color: var(--chip-text);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+}
+
+.chip-arrow {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+/* AI Explanation Box */
+.ai-box {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
+  border-left: 4px solid var(--accent-blue);
+  border-radius: 0 8px 8px 0;
+  padding: 14px 18px;
+  margin-bottom: 22px;
+}
+
+.ai-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.ai-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--accent-blue);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ai-source-badge {
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: 'Cascadia Code', 'Fira Code', Consolas, monospace;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--ai-badge-bg);
+  border: 1px solid var(--ai-badge-border);
+  color: var(--accent-blue);
+  text-transform: uppercase;
+}
+
+.ai-text {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #e2e8f0;
+  line-height: 1.5;
+}
+
+/* Split View */
+.split-view {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 20px;
+}
+
+.split-panel {
+  background: var(--bg-card-alt);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.split-panel.fail {
+  border: 4px solid var(--fail-border);
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.2);
+}
+
+.split-panel.pass {
+  border: 4px solid var(--pass-border);
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.2);
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.panel-badge {
+  font-size: 0.9rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 6px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.panel-badge.fail {
+  background: var(--fail-color);
+  color: #ffffff;
+}
+
+.panel-badge.pass {
+  background: var(--pass-color);
+  color: #ffffff;
+}
+
+.panel-subtext {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.image-frame {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  background: #000000;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.image-frame img {
+  width: 100%;
+  height: auto;
+  max-height: 380px;
+  object-fit: contain;
+  display: block;
+}
+
+.image-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.image-placeholder code {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin-top: 6px;
+  word-break: break-all;
+}
+
+/* Focus Graph Section (Stretch) */
+.graph-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 36px;
+  box-shadow: var(--shadow-lg);
+}
+
+.graph-canvas-container {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--bg-card-alt);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 14px;
+}
+
+.graph-svg {
+  width: 100%;
+  height: auto;
+  min-height: 320px;
+  display: block;
+}
+
+/* Footer */
+footer {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.footer-quote {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 64px 20px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px dashed var(--border-color);
+}

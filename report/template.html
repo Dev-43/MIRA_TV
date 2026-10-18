@@ -2,52 +2,438 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>MIRA TV report</title>
+<title>MIRA TV — Remote Control QA Report</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header><h1>MIRA TV</h1><p id="meta"></p></header>
-<section id="summary"></section>
-<main id="cards"></main>
-<footer>Pass/fail decided by deterministic tests; AI only explains.</footer>
+<div class="container">
+  <!-- (1) Header -->
+  <header>
+    <div class="header-title-row">
+      <h1>
+        <span>MIRA TV</span>
+        <span class="brand-badge">Autonomous Remote-Control QA</span>
+      </h1>
+      <div id="mode-badge-slot"></div>
+    </div>
+    <div class="header-meta" id="header-meta">
+      <div class="meta-item">Loading run metadata...</div>
+    </div>
+  </header>
+
+  <!-- (2) Summary Bar -->
+  <section class="summary-bar" id="summary-bar">
+    <div class="summary-card defects">
+      <span class="summary-label">Defects Found</span>
+      <span class="summary-val" id="val-defects">0</span>
+    </div>
+    <div class="summary-card verified">
+      <span class="summary-label">Fixes Verified</span>
+      <span class="summary-val" id="val-verified">0</span>
+    </div>
+    <div class="summary-card ai">
+      <span class="summary-label">AI Calls</span>
+      <span class="summary-val" id="val-ai">0</span>
+    </div>
+    <div class="summary-card screens">
+      <span class="summary-label">Screens Explored</span>
+      <span class="summary-val" id="val-screens">0</span>
+    </div>
+  </section>
+
+  <!-- Stretch: Focus Graph Visualization (rendered if graph data exists) -->
+  <section class="graph-section" id="graph-section" style="display: none;">
+    <h2 class="section-title">Focus Navigation Graph</h2>
+    <div class="graph-canvas-container" id="graph-canvas-container"></div>
+  </section>
+
+  <!-- (3) & (4) Defect Cards with Split View -->
+  <section>
+    <h2 class="section-title">Defect Investigation &amp; Verification</h2>
+    <main class="cards-container" id="cards"></main>
+  </section>
+
+  <!-- (5) Footer -->
+  <footer>
+    <p class="footer-quote">Pass/fail decided by deterministic tests; AI only explains.</p>
+  </footer>
+</div>
+
 <script>
 window.MIRA_REPORT = /*__MIRA_REPORT_JSON__*/null;
 (function () {
+  'use strict';
   var r = window.MIRA_REPORT;
   var $ = function (id) { return document.getElementById(id); };
-  if (!r) { $('cards').textContent = 'No report data. Build this file with python -m mira_tv report.'; return; }
-  $('meta').textContent = 'Run ' + r.run_id + ' | mode: ' + r.mode + ' | app: ' + r.app.package;
-  var s = r.summary;
-  $('summary').textContent = 'Defects found: ' + s.defects_found + '   Fixes verified: ' + s.fixed_verified + '   AI calls: ' + s.ai_calls;
-  var byId = {};
-  (r.verify || []).forEach(function (v) { byId[v.defect_id] = v; });
-  (r.defects || []).forEach(function (d) {
-    var v = byId[d.id];
-    var card = document.createElement('article'); card.className = 'card';
-    var h = document.createElement('h2');
-    h.textContent = d.type + '  ' + d.element_id + '  (' + d.screen + ')';
-    card.appendChild(h);
-    var path = document.createElement('p'); path.className = 'path';
-    path.textContent = 'Path: ' + (d.path.length ? d.path.join(' > ') : '(none)');
-    card.appendChild(path);
-    var ex = document.createElement('p');
-    ex.textContent = (d.ai_explanation || d.evidence.detail) + '  [' + d.ai_source + ']';
-    card.appendChild(ex);
-    var split = document.createElement('div'); split.className = 'split';
-    function side(cls, label, img) {
-      var box = document.createElement('div'); box.className = 'side ' + cls;
-      var badge = document.createElement('span'); badge.className = 'badge'; badge.textContent = label;
-      box.appendChild(badge);
-      if (img) { var im = document.createElement('img'); im.src = img; im.alt = label; box.appendChild(im); }
-      return box;
+
+  if (!r) {
+    $('cards').innerHTML = '<div class="empty-state"><h3>No Report Data Available</h3><p>Build this report with <code>python -m mira_tv report</code> or supply valid run data.</p></div>';
+    return;
+  }
+
+  // (1) Populate Header
+  var metaEl = $('header-meta');
+  metaEl.innerHTML = '';
+
+  var runItem = document.createElement('div');
+  runItem.className = 'meta-item';
+  runItem.innerHTML = '<span>Run:</span> <strong>' + escapeHtml(r.run_id || 'Unknown') + '</strong>';
+  metaEl.appendChild(runItem);
+
+  var pkgItem = document.createElement('div');
+  pkgItem.className = 'meta-item';
+  var pkgName = (r.app && r.app.package) ? r.app.package : 'Unknown App';
+  pkgItem.innerHTML = '<span>App:</span> <strong>' + escapeHtml(pkgName) + '</strong>';
+  metaEl.appendChild(pkgItem);
+
+  if (r.app && r.app.git_commit) {
+    var commitItem = document.createElement('div');
+    commitItem.className = 'meta-item';
+    commitItem.innerHTML = '<span>Commit:</span> <strong>' + escapeHtml(r.app.git_commit.substring(0, 7)) + '</strong>';
+    metaEl.appendChild(commitItem);
+  }
+
+  var modeSlot = $('mode-badge-slot');
+  if (r.mode) {
+    var modeSpan = document.createElement('span');
+    modeSpan.className = 'mode-badge ' + (r.mode === 'live' ? 'live' : 'fixture');
+    modeSpan.textContent = r.mode + ' mode';
+    modeSlot.appendChild(modeSpan);
+  }
+
+  // (2) Populate Summary Bar
+  var s = r.summary || {};
+  $('val-defects').textContent = (s.defects_found != null) ? s.defects_found : (r.defects ? r.defects.length : 0);
+  $('val-verified').textContent = (s.fixed_verified != null) ? s.fixed_verified : (r.verify ? r.verify.filter(function (v) { return v.after === 'PASS'; }).length : 0);
+  $('val-ai').textContent = (s.ai_calls != null) ? s.ai_calls : 0;
+  $('val-screens').textContent = (r.screens && r.screens.length) ? r.screens.length : 1;
+
+  // Map verify blocks by defect_id
+  var verifyById = {};
+  (r.verify || []).forEach(function (v) {
+    if (v && v.defect_id) {
+      verifyById[v.defect_id] = v;
     }
-    var after = v && v.after === 'PASS';
-    split.appendChild(side('fail', 'FAIL (before)', v ? v.before_screenshot : d.evidence.screenshot));
-    split.appendChild(side(after ? 'pass' : 'fail', after ? 'PASS (after fix)' : 'FAIL (not fixed)', v ? v.after_screenshot : null));
-    card.appendChild(split);
-    $('cards').appendChild(card);
   });
+
+  // Track defect IDs for graph color-coding
+  var defectMap = {};
+  (r.defects || []).forEach(function (d) {
+    if (d && d.element_id) {
+      defectMap[d.element_id] = d.type;
+    }
+  });
+
+  // Stretch: Render Focus Graph if screens have graph_before
+  renderFocusGraphs(r.screens, defectMap);
+
+  // (3) & (4) Populate Defect Cards
+  var cardsContainer = $('cards');
+  cardsContainer.innerHTML = '';
+
+  var defectsList = r.defects || [];
+  if (defectsList.length === 0) {
+    cardsContainer.innerHTML = '<div class="empty-state"><h3>No Defects Discovered</h3><p>All remote navigation paths and visual indicators verified successfully.</p></div>';
+    return;
+  }
+
+  defectsList.forEach(function (d) {
+    var v = verifyById[d.id];
+    var card = document.createElement('article');
+    card.className = 'defect-card';
+
+    // Card Header: Badge, Element ID, Screen
+    var header = document.createElement('div');
+    header.className = 'card-header';
+
+    var headerLeft = document.createElement('div');
+    headerLeft.className = 'card-header-left';
+
+    var typeClass = (d.type || 'unknown').toLowerCase().replace(/_/g, '-');
+    var badge = document.createElement('span');
+    badge.className = 'defect-type-badge ' + typeClass;
+    badge.textContent = d.type || 'DEFECT';
+    headerLeft.appendChild(badge);
+
+    var elemText = document.createElement('span');
+    elemText.className = 'element-id-text';
+    elemText.textContent = d.element_id || d.id;
+    headerLeft.appendChild(elemText);
+
+    header.appendChild(headerLeft);
+
+    if (d.screen) {
+      var screenBadge = document.createElement('div');
+      screenBadge.className = 'screen-badge';
+      screenBadge.innerHTML = 'Screen: <span>' + escapeHtml(d.screen) + '</span>';
+      header.appendChild(screenBadge);
+    }
+
+    card.appendChild(header);
+
+    // Key Path as Chips
+    var pathRow = document.createElement('div');
+    pathRow.className = 'path-row';
+    var pathLabel = document.createElement('span');
+    pathLabel.className = 'path-label';
+    pathLabel.textContent = 'Navigation Path:';
+    pathRow.appendChild(pathLabel);
+
+    if (d.path && d.path.length > 0) {
+      d.path.forEach(function (key, idx) {
+        if (idx > 0) {
+          var arrow = document.createElement('span');
+          arrow.className = 'chip-arrow';
+          arrow.innerHTML = '&rarr;';
+          pathRow.appendChild(arrow);
+        }
+        var chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.textContent = key;
+        pathRow.appendChild(chip);
+      });
+    } else {
+      var directChip = document.createElement('span');
+      directChip.className = 'chip';
+      directChip.textContent = 'Direct / Entry';
+      pathRow.appendChild(directChip);
+    }
+    card.appendChild(pathRow);
+
+    // AI Explanation with ai_source badge
+    var aiBox = document.createElement('div');
+    aiBox.className = 'ai-box';
+
+    var aiHeader = document.createElement('div');
+    aiHeader.className = 'ai-header';
+
+    var aiTitle = document.createElement('div');
+    aiTitle.className = 'ai-title';
+    aiTitle.textContent = 'Defect Analysis';
+    aiHeader.appendChild(aiTitle);
+
+    var aiSource = document.createElement('span');
+    aiSource.className = 'ai-source-badge';
+    aiSource.textContent = d.ai_source ? ('Source: ' + d.ai_source) : 'Source: deterministic';
+    aiHeader.appendChild(aiSource);
+
+    aiBox.appendChild(aiHeader);
+
+    var aiText = document.createElement('p');
+    aiText.className = 'ai-text';
+    var explanationText = d.ai_explanation || (d.evidence && d.evidence.detail) || 'Deterministic detector identified remote navigation failure.';
+    aiText.textContent = explanationText;
+    aiBox.appendChild(aiText);
+
+    card.appendChild(aiBox);
+
+    // Split View (Before vs After)
+    var split = document.createElement('div');
+    split.className = 'split-view';
+
+    // Left Panel (Before - FAIL)
+    var beforeImg = (v && v.before_screenshot) ? v.before_screenshot : (d.evidence ? d.evidence.screenshot : null);
+    split.appendChild(createSplitPanel('fail', 'FAIL (BEFORE)', 'Unpatched Defect', beforeImg));
+
+    // Right Panel (After - PASS or FAIL)
+    var isPass = v && (v.after === 'PASS');
+    var afterStatus = isPass ? 'pass' : 'fail';
+    var afterLabel = isPass ? 'PASS (AFTER FIX)' : 'FAIL (NOT FIXED)';
+    var afterSubtext = v && v.fix ? ('Patch: ' + v.fix) : (isPass ? 'Fix Verified' : 'Fix Incomplete');
+    var afterImg = v ? v.after_screenshot : null;
+    split.appendChild(createSplitPanel(afterStatus, afterLabel, afterSubtext, afterImg));
+
+    card.appendChild(split);
+    cardsContainer.appendChild(card);
+  });
+
+  // Helper: Create split-view panel
+  function createSplitPanel(statusCls, badgeText, subtext, imgSrc) {
+    var panel = document.createElement('div');
+    panel.className = 'split-panel ' + statusCls;
+
+    var pHeader = document.createElement('div');
+    pHeader.className = 'panel-header';
+
+    var badge = document.createElement('span');
+    badge.className = 'panel-badge ' + statusCls;
+    badge.textContent = badgeText;
+    pHeader.appendChild(badge);
+
+    var sub = document.createElement('span');
+    sub.className = 'panel-subtext';
+    sub.textContent = subtext;
+    pHeader.appendChild(sub);
+
+    panel.appendChild(pHeader);
+
+    var frame = document.createElement('div');
+    frame.className = 'image-frame';
+
+    if (imgSrc) {
+      var img = document.createElement('img');
+      img.src = imgSrc;
+      img.alt = badgeText;
+      img.onerror = function () {
+        frame.innerHTML = '<div class="image-placeholder"><span>Screenshot captured</span><code>' + escapeHtml(imgSrc) + '</code></div>';
+      };
+      frame.appendChild(img);
+    } else {
+      frame.innerHTML = '<div class="image-placeholder"><span>No screenshot asset available</span></div>';
+    }
+
+    panel.appendChild(frame);
+    return panel;
+  }
+
+  // Stretch Goal: SVG Focus Graph Rendering
+  function renderFocusGraphs(screens, defectMap) {
+    if (!screens || !screens.length) return;
+    var validScreens = screens.filter(function (s) {
+      return s.graph_before && s.graph_before.nodes && s.graph_before.nodes.length > 0;
+    });
+
+    if (validScreens.length === 0) return;
+
+    var graphSection = $('graph-section');
+    var container = $('graph-canvas-container');
+    container.innerHTML = '';
+    graphSection.style.display = 'block';
+
+    validScreens.forEach(function (scr) {
+      var title = document.createElement('h3');
+      title.style.margin = '10px 0 16px';
+      title.style.fontSize = '1.1rem';
+      title.style.color = '#94a3b8';
+      title.textContent = 'Screen: ' + scr.screen + ' (' + scr.graph_before.nodes.length + ' nodes, ' + (scr.graph_before.edges ? scr.graph_before.edges.length : 0) + ' transitions)';
+      container.appendChild(title);
+
+      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'graph-svg');
+      svg.setAttribute('viewBox', '0 0 1000 400');
+
+      // Defs for arrow markers
+      var defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      var marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+      marker.setAttribute('id', 'arrow');
+      marker.setAttribute('viewBox', '0 0 10 10');
+      marker.setAttribute('refX', '8');
+      marker.setAttribute('refY', '5');
+      marker.setAttribute('markerWidth', '6');
+      marker.setAttribute('markerHeight', '6');
+      marker.setAttribute('orient', 'auto-start-reverse');
+      var markerPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      markerPath.setAttribute('d', 'M 0 1 L 9 5 L 0 9 z');
+      markerPath.setAttribute('fill', '#64748b');
+      marker.appendChild(markerPath);
+      defs.appendChild(marker);
+      svg.appendChild(defs);
+
+      // Layout nodes across SVG canvas
+      var nodes = scr.graph_before.nodes;
+      var nodePos = {};
+      var count = nodes.length;
+      var cols = Math.min(count, 4);
+      var rows = Math.ceil(count / cols);
+      var cellW = 1000 / cols;
+      var cellH = 340 / rows;
+
+      nodes.forEach(function (n, idx) {
+        var c = idx % cols;
+        var r = Math.floor(idx / cols);
+        var cx = cellW * c + cellW / 2;
+        var cy = cellH * r + cellH / 2 + 30;
+        nodePos[n.id] = { x: cx, y: cy };
+      });
+
+      // Draw Edges
+      var edges = scr.graph_before.edges || [];
+      edges.forEach(function (e) {
+        var p1 = nodePos[e.from];
+        var p2 = nodePos[e.to];
+        if (p1 && p2 && e.from !== e.to) {
+          var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', p1.x);
+          line.setAttribute('y1', p1.y);
+          line.setAttribute('x2', p2.x);
+          line.setAttribute('y2', p2.y);
+          line.setAttribute('stroke', '#475569');
+          line.setAttribute('stroke-width', '2');
+          line.setAttribute('marker-end', 'url(#arrow)');
+          svg.appendChild(line);
+
+          // Edge Key label
+          var midX = (p1.x + p2.x) / 2;
+          var midY = (p1.y + p2.y) / 2 - 6;
+          var keyText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          keyText.setAttribute('x', midX);
+          keyText.setAttribute('y', midY);
+          keyText.setAttribute('fill', '#94a3b8');
+          keyText.setAttribute('font-size', '12');
+          keyText.setAttribute('font-family', 'monospace');
+          keyText.setAttribute('text-anchor', 'middle');
+          keyText.textContent = e.key;
+          svg.appendChild(keyText);
+        }
+      });
+
+      // Draw Nodes
+      nodes.forEach(function (n) {
+        var p = nodePos[n.id];
+        if (!p) return;
+
+        var dType = defectMap[n.id];
+        var fill = '#10b981'; // normal
+        var stroke = '#059669';
+        if (dType === 'UNREACHABLE') {
+          fill = '#f43f5e';
+          stroke = '#e11d48';
+        } else if (dType === 'TRAP') {
+          fill = '#f59e0b';
+          stroke = '#d97706';
+        } else if (n.id.indexOf('drawer') !== -1) {
+          fill = '#0284c7';
+          stroke = '#0369a1';
+        }
+
+        var rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', p.x - 85);
+        rect.setAttribute('y', p.y - 24);
+        rect.setAttribute('width', 170);
+        rect.setAttribute('height', 48);
+        rect.setAttribute('rx', 8);
+        rect.setAttribute('fill', fill);
+        rect.setAttribute('fill-opacity', '0.2');
+        rect.setAttribute('stroke', stroke);
+        rect.setAttribute('stroke-width', '2');
+        svg.appendChild(rect);
+
+        var txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', p.x);
+        txt.setAttribute('y', p.y + 5);
+        txt.setAttribute('fill', '#ffffff');
+        txt.setAttribute('font-size', '13');
+        txt.setAttribute('font-weight', '700');
+        txt.setAttribute('font-family', 'monospace');
+        txt.setAttribute('text-anchor', 'middle');
+        txt.textContent = n.id;
+        svg.appendChild(txt);
+      });
+
+      container.appendChild(svg);
+    });
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
 })();
 </script>
 </body>

@@ -232,3 +232,27 @@ mira-tv/
 - **Files Modified / Added**: `docs/APP_MAP.md`, `contracts/scenario.json`, `contracts/expected_elements.json`, `contracts/bug_map.json`, `app/packages/shared-ui/**`, `bugs/BUG-01-unreachable.patch`, `bugs/BUG-02-trap.patch`, `bugs/BUG-03-no-indicator.patch`, `fixes/FIX-01-unreachable.patch`, `fixes/FIX-02-trap.patch`, `fixes/FIX-03-no-indicator.patch`, `DECISION.md`.
 - **Integration Impact**: Engine (D) can now parse real scenario/element contracts, validate against `APP_MAP.md`, and execute test runs finding all three planted defects deterministically.
 
+### [ADR-008] Report Template and Offline Styling Architecture (Task V6 / Contract C5)
+- **Date**: 2026-10-18
+- **Author**: V (App/Integration)
+- **Scope / Component**: `report/template.html`, `report/style.css`
+- **Context & Problem**: Per Contract C5 and Task V6, MIRA TV requires a standalone, offline static HTML report generated from deterministic test runs and Bedrock Vision explanations:
+  1. Strict single-injection token architecture: exactly one `/*__MIRA_REPORT_JSON__*/null` token and exactly one `<link rel="stylesheet" href="style.css">` tag for D's `build_report.py` compiler.
+  2. Zero external assets: no CDNs, external fonts, or online scripts; works natively from `file://`.
+  3. Visual legibility for 1080p video demo: base font $\ge 18$ px, high-contrast dark theme, and keycap chip styling for D-pad navigation paths.
+  4. Deterministic reporting integrity: defect verification split view must render FAIL (red) for unpatched states and PASS (green) only when deterministically confirmed fixed (`after === 'PASS'`). If a fix fails, it must remain red and not claim success.
+  5. Focus Graph Stretch Goal: render interactive/responsive SVG focus navigation graphs showing node reachability and directional transitions.
+- **Decision Taken**:
+  1. Implemented `report/style.css` with dark theme variables, responsive CSS grid summary tiles, distinct badge color systems for `UNREACHABLE` (rose), `TRAP` (amber), and `NO_FOCUS_INDICATOR` (violet), and side-by-side split panels with 4px borders.
+  2. Implemented `report/template.html` strictly honoring Contract C5 token placement.
+  3. Built modular renderers for:
+     - Header metadata (run ID, mode, app package, git commit).
+     - Summary metrics (defects found, fixes verified, AI calls, screens explored).
+     - Defect cards displaying element IDs, screens, remote key chips, and AI explanation callouts labeled with `ai_source`.
+     - Split-view comparison panels with fallback image handlers.
+     - SVG focus graph renderer mapping nodes, edges, and directional key labels.
+     - Footer with required deterministic disclaimer: "Pass/fail decided by deterministic tests; AI only explains."
+- **Files Modified / Added**: `report/template.html`, `report/style.css`, `DECISION.md`.
+- **Integration Impact**: D's `build_report.py` can now compile `artifacts/<run_id>/report.html` by replacing the link tag with inlined CSS and injecting `report.json`.
+
+
