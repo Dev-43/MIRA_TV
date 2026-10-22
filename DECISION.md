@@ -276,3 +276,34 @@ mira-tv/
 - **Files Modified / Added**: `DECISION.md`.
 - **Integration Impact**: Both teammates proceed with zero blockers. Teammate V receives a complete, robust, 100% test-passing engine ready for live device pairing.
 
+### [ADR-012] TV Application Map, Spatial Focus Telemetry Hook, and Reversible Defect Patch Pairs (Tasks V1–V4)
+- **Date**: 2026-10-18
+- **Author**: V (App, Contracts & Report)
+- **Scope / Component**: `app/**`, `contracts/**`, `bugs/**`, `fixes/**`, `scripts/check_hook.ps1`, `scripts/check_patches.ps1`, `docs/APP_MAP.md`
+- **Context & Problem**: To execute automated remote-control QA, MIRA requires an instrumented target TV application capable of streaming real-time focus events over ADB logcat (`MIRA_FOCUS`), definitive contract files declaring the navigation space, and three vetted, reversible bug/fix patch pairs for acceptance verification.
+- **Decision Taken**:
+  1. **Application Baseline & Map (`docs/APP_MAP.md`)**: Imported Amazon's `react-native-multi-tv-app-sample` into `app/`. Cataloged screens (`home`, `details`), key navigation regions, and documented component IDs in format `<screen>.<region>.<n>`.
+  2. **Contracts Declaration**: Formatted `contracts/scenario.json` and `contracts/expected_elements.json` mapping all interactable controls across the drawer, hero banner, content cards, and detail action buttons. Aligned `contracts/bug_map.json` (`UNREACHABLE:details.btn.addlist`, `TRAP:home.card.4`, `NO_FOCUS_INDICATOR:home.card.2`) for full compatibility with both synthetic and live verification.
+  3. **Zero-Overhead Focus Telemetry Hook (`app/mira/reportFocus.ts`)**: Designed `reportFocus` to emit strictly formatted JSON over React Native `console.log` during `__DEV__`, capturing element ID, active screen, timestamp, and window-relative bounding coordinates scaled via `PixelRatio.get()`. Wired hook into `CustomDrawerContent.tsx`, `HomeScreen.tsx`, `DetailsScreen.tsx`, and `FocusablePressable.tsx`.
+  4. **Strict Defect & Fix Patch Pairs (`bugs/*.patch`, `fixes/*.patch`)**: Created 3 minimal unified diff patches (each <= 20 lines) targeting isolated behaviors:
+     - `BUG-01` / `FIX-01`: Removes / restores focusability on `details.btn.addlist`.
+     - `BUG-02` / `FIX-02`: Blocks / restores exit navigation from content card grid (`home.card.4`).
+     - `BUG-03` / `FIX-03`: Suppresses / restores focused visual indicators on `home.card.2`.
+  5. **Automated Patch Verification Script**: Created `scripts/check_patches.ps1` verifying clean atomic application, reversal, and tree cleanliness across all 3 patch pairs.
+- **Files Modified / Added**: `app/mira/reportFocus.ts`, `app/packages/shared-ui/src/**`, `contracts/scenario.json`, `contracts/expected_elements.json`, `contracts/bug_map.json`, `bugs/**`, `fixes/**`, `scripts/check_hook.ps1`, `scripts/check_patches.ps1`, `docs/APP_MAP.md`, `DECISION.md`.
+- **Integration Impact**: Teammate D's engine can drive and verify fixes against live app code with 100% reversible patch fidelity.
+
+### [ADR-013] Accessible Dark Theme Report Template and SVG Focus Visualizer (Task V6)
+- **Date**: 2026-10-18
+- **Author**: V (App, Contracts & Report)
+- **Scope / Component**: `report/template.html`, `report/style.css`
+- **Context & Problem**: Hackathon judges require a clear, high-contrast, offline-first HTML report showing the QA run summary, defect explanations, split before/after visual proof, and focus navigation flow. The template must strictly adhere to Contract C5.
+- **Decision Taken**:
+  1. **Contract C5 Adherence**: Authored `report/template.html` containing exactly one `<link rel="stylesheet" href="style.css">` and exactly one inline JavaScript placeholder `window.MIRA_REPORT = /*__MIRA_REPORT_JSON__*/null;`.
+  2. **10-Foot UI Readability & Dark Theme (`report/style.css`)**: Styled with a dark palette (`#0a0e14`, `#121820`, `#161f2c`), vibrant accents (`#38bdf8`), base font >= 18px for video legibility, and high-contrast color-coded defect badges (`UNREACHABLE`, `TRAP`, `NO_FOCUS_INDICATOR`).
+  3. **Split-View Verification Cards**: Each defect card displays the target element ID, navigation key sequence chips (`RIGHT`, `DOWN`, etc.), AI root-cause explanation with provenance badge, and a side-by-side comparison (FAIL with 6px red border vs. PASS with 6px green border).
+  4. **Dynamic SVG Focus Graph Visualizer**: Implemented pure client-side SVG rendering of the navigation graph, positioning nodes dynamically according to measured UI coordinates, drawing directed transition arrows with key labels, and highlighting trapped/unreachable nodes in defect-specific warning colors.
+  5. **Deterministic Disclaimer**: Anchored required footer declaration: *"Pass/fail decided by deterministic tests; AI only explains."*
+- **Files Modified / Added**: `report/template.html`, `report/style.css`, `DECISION.md`.
+- **Integration Impact**: Generates standalone, single-file HTML reports viewable from `file://` with zero external CDN dependencies, fully verified by `tests/test_report.py` and `python -m mira_tv demo --mode fixture`.
+
