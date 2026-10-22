@@ -3,7 +3,7 @@ $adb = if ($env:MIRA_ADB_PATH) { $env:MIRA_ADB_PATH } else { "adb" }
 $serial = @()
 if ($env:MIRA_ADB_SERIAL) { $serial = @("-s", $env:MIRA_ADB_SERIAL) }
 & $adb @serial logcat -c
-foreach ($k in @("KEYCODE_DPAD_RIGHT", "KEYCODE_DPAD_DOWN", "KEYCODE_DPAD_LEFT", "KEYCODE_DPAD_UP")) {
+foreach ($k in @("KEYCODE_DPAD_RIGHT", "KEYCODE_DPAD_RIGHT", "KEYCODE_DPAD_RIGHT", "KEYCODE_DPAD_LEFT", "KEYCODE_DPAD_LEFT", "KEYCODE_DPAD_LEFT")) {
   & $adb @serial shell input keyevent $k
   Start-Sleep -Milliseconds 700
 }
