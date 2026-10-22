@@ -54,7 +54,11 @@ const FocusablePressable = React.memo(({
         if (screen && elementId) {
           if (containerRef.current?.measureInWindow) {
             containerRef.current.measureInWindow((x, y, w, h) => {
-              reportFocus(screen, elementId, { x, y, w, h });
+              if (typeof x === 'number' && !isNaN(x)) {
+                reportFocus(screen, elementId, { x, y, w, h });
+              } else {
+                reportFocus(screen, elementId);
+              }
             });
           } else {
             reportFocus(screen, elementId);
