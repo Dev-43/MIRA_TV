@@ -307,3 +307,15 @@ mira-tv/
 - **Files Modified / Added**: `report/template.html`, `report/style.css`, `DECISION.md`.
 - **Integration Impact**: Generates standalone, single-file HTML reports viewable from `file://` with zero external CDN dependencies, fully verified by `tests/test_report.py` and `python -m mira_tv demo --mode fixture`.
 
+### [ADR-014] CLI Explore & Verify Commands Completion and Documentation Finalization (Task D9 & V8)
+- **Date**: 2026-10-23
+- **Author**: D (Engine) & V (App, Contracts & Report)
+- **Scope / Component**: `mira_tv/cli.py`, `tests/test_cli.py`, `README.md`, `DECISION.md`
+- **Context & Problem**: Subcommands `explore` and `verify` were previously marked as stubs in `mira_tv/cli.py` (`NOT_YET = ["explore", "verify"]`). Per Task D9 and V5, `python -m mira_tv explore` must explore screens, detect defects, and return exit code 1 if defects are found (0 if clean, 2 on driver error), while `verify` must verify fixes from `bug_map.json`. In addition, `README.md` contained placeholder sections needing full hackathon judge quickstart and Amazon TV guidelines documentation.
+- **Decision Taken**:
+  1. **CLI `explore` Command**: Implemented `_explore` supporting both `fixture` and `live` modes. Automatically discovers scenario and expected elements, executes screen BFS exploration, runs detectors (`UNREACHABLE`, `TRAP`, `NO_FOCUS_INDICATOR`), prints defect breakdown, and exits with code 1 when defects are present (code 0 when clean).
+  2. **CLI `verify` Command**: Implemented `_verify` chaining discovery and fix verification across all entries in `bug_map.json`. Validates before/after states and confirms regression-free fixes with PASS/FAIL status.
+  3. **Unit Tests (100% Passing)**: Updated `tests/test_cli.py` to test clean fixture exploration (exit 0), bug fixture exploration (exit 1), invalid fixture handling (exit 2), and fix verification (PASS). Total test suite now stands at 100 passing unit and integration tests.
+  4. **Documentation Finalization**: Filled `README.md` with official Amazon Fire TV UX guideline citations, architecture data flow, mathematical detection definitions, Bedrock Converse integration details, and 2-minute judge quickstart commands.
+- **Files Modified / Added**: `mira_tv/cli.py`, `tests/test_cli.py`, `README.md`, `DECISION.md`.
+- **Integration Impact**: CLI subcommands are 100% complete and verified against acceptance criteria. Engine is fully prepared for live verification and demo screen recording.

@@ -6,8 +6,35 @@ def test_no_args_prints_help(capsys):
     assert "validate-events" in capsys.readouterr().out
 
 
-def test_unimplemented_returns_2():
-    assert main(["explore"]) == 2
+def test_explore_clean_fixture(capsys):
+    rc = main(["explore", "--mode", "fixture", "--fixture", "fixtures/synthetic_clean"])
+    assert rc == 0
+    assert "Defects found: 0" in capsys.readouterr().out
+
+
+def test_explore_bugs_fixture(capsys):
+    rc = main(["explore", "--mode", "fixture", "--fixture", "fixtures/synthetic_bugs"])
+    assert rc == 1
+    assert "Defects found: 3" in capsys.readouterr().out
+
+
+def test_explore_invalid_fixture():
+    assert main(["explore", "--mode", "fixture", "--fixture", "fixtures/nonexistent"]) == 2
+
+
+def test_verify_fixture_mode(tmp_path, capsys):
+    out_dir = tmp_path / "verify_cli"
+    rc = main([
+        "verify",
+        "--mode", "fixture",
+        "--fixture", "fixtures/synthetic_bugs",
+        "--clean-fixture", "fixtures/synthetic_clean",
+        "--bug-map", "contracts/bug_map.json",
+        "--out", str(out_dir),
+    ])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "[PASS]" in out
 
 
 def test_validate_events_file(tmp_path, capsys):
@@ -59,4 +86,3 @@ def test_ai_ping_live_mocked(monkeypatch, capsys):
         rc = main(["ai-ping"])
         assert rc == 2
         assert "FAIL" in capsys.readouterr().err
-
