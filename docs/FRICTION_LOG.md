@@ -59,3 +59,27 @@ Entry template (copy, fill, append at the end):
 - **Severity**: Medium
 - **Workaround**: Passed raw PNG bytes directly into the `source.bytes` dictionary in `mira_tv/ai.py` and wrapped calls with automatic fallback to `stub` mode on any API exception.
 - **Actionable suggestion**: AWS Boto3 documentation for the Converse API should explicitly contrast the `bytes` dictionary schema against the base64 convention used by Anthropic's native Messages API.
+
+### ADB Screencap race condition during D-pad focus transitions - V - 2026-10-21
+- **Task attempted**: Automated D-pad traversal and screenshot capture in AdbDriver.
+- **Steps taken**: Fired `adb shell input keyevent` followed immediately by `adb exec-out screencap -p`.
+- **Expected vs actual**: Expected the screenshot to reflect the newly focused element; instead captured a mid-transition blurry frame before the focus state completed rendering.
+- **Severity**: High
+- **Workaround**: Introduced a 150ms settling debounce between keyevent execution and screencap invocation.
+- **Actionable suggestion**: Android TV ADB should offer an atomic keyevent-and-capture command or an event listener signaling view rendering completion.
+
+### React Native Spatial Navigation Euclidean vector traps - V - 2026-10-21
+- **Task attempted**: Navigating between horizontal movie rows and the side navigation drawer.
+- **Steps taken**: Pressed LEFT from the first card of a virtualized horizontal list.
+- **Expected vs actual**: Expected focus to transition cleanly to the drawer menu; instead focus remained stuck on the first card because off-screen virtualized items skewed Euclidean distance calculations.
+- **Severity**: Medium
+- **Workaround**: Explicitly defined spatial navigation boundaries and designated `exit_targets` in `contracts/scenario.json`.
+- **Actionable suggestion**: `react-tv-space-navigation` should provide explicit directional escape hooks when spatial distance calculation resolves to null.
+
+### Latency on uncompressed 1080p screenshots sent to Amazon Bedrock - D - 2026-10-22
+- **Task attempted**: Sending full-resolution 1080p emulator screencaps to Bedrock Converse API for visual defect analysis.
+- **Steps taken**: Sent uncompressed 1920x1080 PNG payloads via boto3.
+- **Expected vs actual**: Payload size resulted in 12–16 second roundtrips with intermittent socket timeouts.
+- **Severity**: Medium
+- **Workaround**: Pre-processed screenshots down to a maximum width of 1280px with 85% JPEG compression, dropping latency under 2.5 seconds.
+- **Actionable suggestion**: Bedrock Converse API client should provide optional automatic client-side image compression parameters.
