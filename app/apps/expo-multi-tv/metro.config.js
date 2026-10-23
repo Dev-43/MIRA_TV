@@ -8,7 +8,6 @@ const config = getDefaultConfig(__dirname); // eslint-disable-line no-undef
 // Configure Metro to work with Yarn workspaces
 config.watchFolders = [
   path.resolve(__dirname, '../../packages/shared-ui'),
-  path.resolve(__dirname, '../..'),
 ];
 
 config.resolver = {

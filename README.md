@@ -10,7 +10,14 @@
 
 ---
 
+## 📺 Demo Video
+Watch the 1:30 minute walkthrough demonstrating autonomous exploration, defect detection, AWS Bedrock Converse explanations, and automated fix verification:
+- **Video Walkthrough**: [Watch MIRA TV in Action](docs/DEMO_SCRIPT.md) *(Submitted on Devpost)*
+
+---
+
 ## Table of Contents
+- [Demo Video](#-demo-video)
 - [Why MIRA TV: Amazon Fire TV Guidelines](#why-mira-tv-amazon-fire-tv-guidelines)
 - [Architecture & Flow](#architecture--flow)
 - [How Detection Works (Deterministic Engine)](#how-detection-works-deterministic-engine)
@@ -155,10 +162,11 @@ pip install -r requirements.txt
 ```
 
 ### 3. Run Automated Tests
-Verify that all 97 offline unit and integration tests pass:
+Verify that all **100 offline unit and integration tests** pass:
 ```bash
 python -m pytest -q
 ```
+*(100 passed in ~5 seconds)*
 
 ### 4. Run the Full QA Demo (Fixture Mode)
 Run the autonomous demo runner in fixture mode:
@@ -175,6 +183,19 @@ python -m mira_tv demo --mode fixture
 6. Generates a standalone single-file HTML report at `artifacts/<run_id>/report.html`.
 
 Open the generated `report.html` directly in any web browser to view the interactive cards, SVG focus visualizer, and split-view evidence.
+
+### 5. Individual CLI Subcommands
+Judges can also run individual phases of the engine:
+```bash
+# Explore a screen topology
+python -m mira_tv explore --screen home --driver fixture --fixture fixtures/synthetic_clean
+
+# Verify defect fixes directly
+python -m mira_tv verify --driver fixture --defect UNREACHABLE:details.btn.addlist --fix fixes/FIX-01-unreachable.patch
+
+# Test AWS Bedrock Converse ping
+python -m mira_tv ai-ping
+```
 
 ---
 
@@ -223,7 +244,7 @@ This repository is **100% brand-new code** authored during the Amazon Developer 
 4. **Offline Single-File Report Compiler (`report/`)**:
    - High-contrast, accessible dark theme HTML/CSS report with client-side SVG focus graph visualizer.
 5. **Contract System & Test Suite (`contracts/`, `tests/`)**:
-   - 97 deterministic unit and integration tests covering drivers, telemetry parser, graph BFS, detectors, vision math, AI engine, and patch verifiers.
+   - 100 deterministic unit and integration tests covering drivers, telemetry parser, graph BFS, detectors, vision math, AI engine, and patch verifiers.
 
 ---
 
